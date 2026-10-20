@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeatPaper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="wordmark" href="#">BeatPaper</a>
+  <div class="top-actions">
+    <button class="icon-btn" id="themeBtn" title="Đổi giao diện sáng / tối" aria-label="Đổi giao diện sáng / tối">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="pill" id="topCam">Camera</button>
+    <button class="pill dark" id="topPlay"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>Phát</button>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="row">
+    <div class="copy">
+      <h1>Gõ tiết tấu<br>bằng màu sắc</h1>
+      <p>Mỗi ô là một phách. Chọn một nhạc cụ ở khay bên dưới rồi chạm vào ô để vẽ tiết tấu.</p>
+      <p>Thanh quét màu xanh chạy qua từng ô, ô nào sáng lên là nhạc cụ đó đang vang.</p>
+
+      <div class="lesson">
+        <div class="lesson-tag" id="lessonTag">Tiết tấu mẫu</div>
+        <div class="mini" id="lessonMini" aria-hidden="true"></div>
+        <p id="lessonText"></p>
+      </div>
+    </div>
+
+    <div class="panel peach">
+      <div class="sheet">
+        <div class="sheet-head">
+          <span id="gridTitle">Bảng vẽ nhịp điệu</span>
+          <button class="link-btn" id="clearBtn" title="Đưa tất cả ô về dấu lặng">Xoá</button>
+        </div>
+
+        <div class="grid-wrap" id="gridWrap">
+          <div class="score" id="score"></div>
+          <div class="playhead" id="playhead"></div>
+        </div>
+
+        <div class="tray palette" id="palette"></div>
+
+        <div class="controls">
+          <button class="play" id="playBtn" aria-label="Phát">
+            <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>
+          </button>
+          <div class="tempo">
+            <label for="bpm">Tempo</label>
+            <input type="range" id="bpm" min="60" max="150" value="80" step="1">
+            <output id="bpmOut" for="bpm">80 BPM</output>
+          </div>
+          <div class="presets">
+            <button class="chip" data-preset="2/4" aria-pressed="true">Thực hành nhịp 2/4</button>
+            <button class="chip" data-preset="3/4" aria-pressed="false">Thực hành nhịp 3/4</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row reverse">
+    <div class="panel sage">
+      <div class="sheet">
+        <div class="sheet-head">
+          <span>Camera quét giấy</span>
+          <span class="status" id="camStatus">Đang tắt</span>
+        </div>
+        <div class="cam-box" id="camBox">
+          <video id="video" playsinline muted></video>
+          <canvas class="overlay" id="overlay"></canvas>
+          <div class="cam-empty" id="camEmpty">Bật camera, rồi giơ dải giấy sao cho các chấm màu nằm trong các ô khung.</div>
+        </div>
+        <div class="chips-det" id="detChips" aria-label="Màu camera đang nhận ra"></div>
+        <div class="cam-row">
+          <button class="pill dark" id="camBtn">Bật camera</button>
+          <label class="toggle"><input type="checkbox" id="camApply" checked> Đưa màu vào bảng</label>
+        </div>
+        <div class="range-row">
+          <span>Vị trí dải</span>
+          <input type="range" id="stripY" min="15" max="85" value="50" aria-label="Vị trí dọc của dải quét">
+        </div>
+        <canvas id="work" hidden></canvas>
+      </div>
+    </div>
+
+    <div class="copy">
+      <h2>Giơ giấy,<br>nghe ngay tiết tấu</h2>
+      <p>Vẽ các chấm đỏ, xanh dương, vàng lên một dải giấy trắng. Mỗi chấm ứng với một phách.</p>
+      <p>Camera đọc màu từng chấm và đưa vào bảng. Chỗ để trắng là dấu lặng.</p>
+      <p class="hint">Phím cách để phát hoặc dừng.</p>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
