@@ -285,29 +285,6 @@ input[type="range"] { accent-color: var(--accent); }
 .presets-row .lbl { font-size: 13px; color: var(--ink-2); }
 @media (max-width: 560px) { .presets { width: 100%; } .presets .chip { flex: 1; justify-content: center; } }
 
-/* ---------- Mã lệnh ---------- */
-.code {
-  font-family: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
-  background: var(--tray); border-radius: 14px; padding: 16px 18px;
-  font-size: 14px; line-height: 2.1; overflow-x: auto; white-space: nowrap;
-}
-.code .kw { color: var(--accent); font-weight: 600; }
-.code .cm { color: var(--ink-3); }
-.code .line { padding-left: 22px; }
-.tok {
-  display: inline-block; min-width: 46px; text-align: center; margin-right: 4px;
-  border-radius: 8px; padding: 0 6px; line-height: 1.7;
-  font-weight: 600; color: var(--ink-3);
-  border: 1.5px dashed var(--tile-border);
-}
-.tok[data-v="R"] { background: var(--red-soft); color: var(--ink); border: 1.5px solid var(--red); }
-.tok[data-v="B"] { background: var(--blue-soft); color: var(--ink); border: 1.5px solid var(--blue); }
-.tok[data-v="Y"] { background: var(--yellow-soft); color: var(--ink); border: 1.5px solid var(--yellow); }
-.tok.now { box-shadow: 0 0 0 3px var(--accent); }
-.tally { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.tally span { font-size: 13px; color: var(--ink-2); background: var(--tray); padding: 4px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
-.tally b { color: var(--ink); }
-
 /* ---------- Camera quét giấy ---------- */
 .row.flip { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
 .panel.sky { background: var(--sky); }
@@ -450,3 +427,67 @@ a.tag:hover { color: var(--ink); }
 .book.g6 { background: var(--peach); } .book.g7 { background: var(--lilac); }
 .book.g8 { background: var(--sage); }  .book.g9 { background: var(--sky); }
 .note-box { margin-top: 32px; font-size: 14px; color: var(--ink-3); max-width: 720px; }
+
+/* ---------- Chuyển động ---------- */
+:root {
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* Hiện dần khi cuộn tới (lớp .reveal do JS gắn) */
+.reveal, .book.reveal {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity .7s var(--ease-out) var(--rd, 0ms), transform .7s var(--ease-out) var(--rd, 0ms);
+}
+.reveal.in, .book.reveal.in { opacity: 1; transform: none; }
+
+/* Chuyển tab */
+.view.enter, #rTitle.enter { animation: rise .45s var(--ease-out); }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+.tab, .grades button, .seg button { transition: background-color .25s, color .25s, box-shadow .25s; }
+
+/* Ô nhịp: nảy khi đổi màu, sáng lên khi thanh quét đi qua */
+.cell.pop { animation: pop .42s var(--ease-spring) backwards; }
+@keyframes pop { from { transform: scale(.7); } }
+.cell.active { box-shadow: 0 0 0 4px var(--accent-soft), 0 10px 20px -10px var(--accent); }
+.cell.hit { animation: cellHit .5s ease-out; }
+@keyframes cellHit {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); }
+  to   { box-shadow: 0 0 0 14px transparent; }
+}
+.playhead { box-shadow: 0 0 12px 1px var(--accent); }
+
+/* Khay màu */
+.swatch .tile { transition: transform .25s var(--ease-spring), box-shadow .2s, border-color .2s; }
+.swatch:hover .tile { transform: translateY(-3px); }
+.swatch[aria-pressed="true"] .tile { animation: pick .4s var(--ease-spring); }
+@keyframes pick { from { transform: scale(.82); } }
+
+/* Nút phát: sóng lan ra khi đang phát */
+.play { position: relative; transition: transform .2s var(--ease-spring); }
+.play:hover { transform: scale(1.06); }
+.play.on::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  border: 2px solid var(--pill-bg); animation: pulse 1.4s ease-out infinite;
+}
+@keyframes pulse { from { transform: scale(1); opacity: .55; } to { transform: scale(1.7); opacity: 0; } }
+.chip, .pill { transition: border-color .2s, background-color .2s, transform .2s var(--ease-spring), opacity .2s; }
+.chip:active, .pill:active { transform: scale(.96); }
+
+/* Bài đọc nhạc: nốt hiện lần lượt, ô bài và thẻ sách nhấc lên khi rê chuột */
+.nt.enter { animation: noteIn .45s var(--ease-spring) backwards; }
+@keyframes noteIn { from { opacity: 0; transform: translateY(10px) scale(.8); } }
+.ritem { transition: transform .25s var(--ease-spring), box-shadow .2s, border-color .2s; }
+.ritem:hover { transform: translateY(-2px); }
+.book { transition: transform .35s var(--ease-spring), box-shadow .35s; }
+.book:hover { transform: translateY(-6px); box-shadow: 0 22px 40px -24px rgba(0, 0, 0, .35); }
+.book .big { transition: transform .35s var(--ease-spring); }
+.book:hover .big { transform: translateX(6px); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important;
+    transition-duration: .001ms !important; transition-delay: 0ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}

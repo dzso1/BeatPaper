@@ -318,7 +318,6 @@ const state = {
 
 const scoreEl = $('score');
 let cellEls = [];
-let tokEls = [];
 let lastStep = -1;
 
 function buildGrid() {
@@ -351,17 +350,30 @@ function buildGrid() {
   }
 }
 
-function renderCells() {
+// Chạy lại một hiệu ứng CSS trên phần tử (xoá lớp, ép trình duyệt vẽ lại, thêm lại)
+function replay(el, cls, delayMs = 0) {
+  el.classList.remove(cls);
+  el.style.animationDelay = delayMs ? `${delayMs}ms` : '';
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
+// wave = true: các ô đổi màu "nảy" lần lượt từ trái sang phải (khi chọn mẫu, xoá hết)
+function renderCells(wave = false) {
+  let n = 0;
   cellEls.forEach((el, i) => {
     const v = state.cells[i];
     if (el.dataset.v === v) return;
+    const first = !el.dataset.v;
     el.dataset.v = v;
     el.innerHTML = `<span class="num">${i + 1}</span>` +
       (v === 'W' ? '' : `<svg viewBox="0 0 24 24">${ICONS[v]}</svg>`);
     const info = INSTRUMENTS[v];
     el.setAttribute('aria-label', `Ô ${i + 1}: ${v === 'W' ? 'phách lặng' : `${info.name} (${info.vi})`}`);
+    if (!first) replay(el, 'pop', wave ? i * 28 : 0);
+    n++;
   });
-  renderCode();
+  return n;
 }
 
 function buildPalette() {
@@ -409,26 +421,8 @@ function loadPreset(n) {
   state.cells = p.cells.replace(/\s/g, '').split('');
   state.preset = n;
   setBpm(p.bpm);
-  renderCells();
+  renderCells(true);
   markPreset();
-}
-
-// Mã lệnh dạng chữ: mỗi ô nhịp một dòng, bọc trong vòng lặp
-function renderCode() {
-  const lines = [];
-  for (let m = 0; m < STEPS / BEATS_PER_BAR; m++) {
-    const toks = state.cells.slice(m * BEATS_PER_BAR, (m + 1) * BEATS_PER_BAR)
-      .map((v) => `<span class="tok" data-v="${v}">${INSTRUMENTS[v].say}</span>`).join('');
-    lines.push(`<div class="line"><span class="cm">ô nhịp ${m + 1}:</span> ${toks}</div>`);
-  }
-  $('code').innerHTML = `<div><span class="kw">lặp lại mãi</span> {</div>${lines.join('')}<div>}</div>`;
-  tokEls = [...$('code').querySelectorAll('.tok')];
-  if (lastStep >= 0) tokEls[lastStep].classList.add('now');
-
-  const n = { R: 0, B: 0, Y: 0, W: 0 };
-  state.cells.forEach((v) => n[v]++);
-  $('tally').innerHTML = ORDER.map((k) =>
-    `<span>${k === 'W' ? 'Nghỉ' : INSTRUMENTS[k].say} <b>×${n[k]}</b></span>`).join('');
 }
 
 /* ----- Tô màu: chạm một ô hoặc kéo qua nhiều ô ----- */
@@ -544,19 +538,12 @@ function placePlayhead(i, frac) {
 }
 
 function setActive(i) {
-  if (lastStep >= 0) {
-    cellEls[lastStep].classList.remove('active', 'hit');
-    tokEls[lastStep]?.classList.remove('now');
-  }
+  if (lastStep >= 0) cellEls[lastStep].classList.remove('active', 'hit');
   lastStep = i;
   if (i < 0) return;
   const el = cellEls[i];
   el.classList.add('active');
-  if (state.cells[i] !== 'W') {
-    void el.offsetWidth; // khởi động lại hiệu ứng "nảy"
-    el.classList.add('hit');
-  }
-  tokEls[i]?.classList.add('now');
+  if (state.cells[i] !== 'W') replay(el, 'hit');   // ô có nhạc cụ "nảy" khi vang
   $('stepStatus').textContent = `Ô ${i + 1} / ${STEPS}`;
 }
 
@@ -577,7 +564,7 @@ $('bpm').addEventListener('input', (e) => setBpm(+e.target.value));
 $('clearBtn').addEventListener('click', () => {
   state.cells = Array(STEPS).fill('W');
   state.preset = -1;
-  renderCells();
+  renderCells(true);
   markPreset();
 });
 window.addEventListener('resize', () => { if (!state.playing && view === 'nhip') placePlayhead(0, 0); });
@@ -1001,6 +988,12 @@ function selectReading(r) {
     `<a class="tag" href="${book.url}" target="_blank" rel="noopener">SGK Âm nhạc ${r.grade} · tr. ${r.page} ↗</a>`;
   setRBpm(r.bpm);
   renderScore();
+  // các nốt hiện ra lần lượt theo thứ tự đọc
+  $('rScore').querySelectorAll('.nt').forEach((n, k) => {
+    n.style.animationDelay = `${Math.min(k * 14, 700)}ms`;
+    n.classList.add('enter');
+  });
+  replay($('rTitle'), 'enter');
   buildTimeline();
   rStatusIdle();
   if (view === 'doc') try { history.replaceState(null, '', `#doc/${r.grade}/${r.no}`); } catch (e) {}
@@ -1145,6 +1138,37 @@ function buildBooks() {
 }
 
 /* =========================================================
+   Hiệu ứng xuất hiện khi cuộn tới
+   ---------------------------------------------------------
+   Lớp .reveal chỉ được gắn bằng JS, nên nếu script lỗi trang vẫn hiện đủ.
+   Các phần tử cùng nhóm hiện so le nhau một chút.
+   ========================================================= */
+function setupReveal() {
+  const groups = ['.intro > *', '.view > .panel', '.row > *', '.reader > *', '.books > .book', '.note-box'];
+  const els = [];
+  groups.forEach((sel) => document.querySelectorAll(sel).forEach((el, k) => {
+    el.classList.add('reveal');
+    el.style.setProperty('--rd', `${k * 90}ms`);
+    els.push(el);
+  }));
+  if (!('IntersectionObserver' in window)) { els.forEach((el) => el.classList.add('in')); return; }
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    el.classList.add('in');
+    io.unobserve(el);
+    // xong hiệu ứng thì gỡ lớp, để các hiệu ứng rê chuột không bị trễ theo --rd
+    el.addEventListener('transitionend', function done(ev) {
+      if (ev.target !== el || ev.propertyName !== 'opacity') return;
+      el.classList.remove('reveal', 'in');
+      el.style.removeProperty('--rd');
+      el.removeEventListener('transitionend', done);
+    });
+  }), { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  els.forEach((el) => io.observe(el));
+}
+
+/* =========================================================
    Chuyển tab, nút Phát trên cùng, phím tắt, giao diện sáng / tối
    ========================================================= */
 let view = 'nhip';
@@ -1160,6 +1184,8 @@ function setPlayUI() {
   $('playBtn').setAttribute('aria-label', state.playing ? 'Dừng' : 'Phát');
   $('rPlayIcon').innerHTML = rd.playing ? ICON_STOP : ICON_PLAY;
   $('rPlayBtn').setAttribute('aria-label', rd.playing ? 'Dừng' : 'Phát');
+  $('playBtn').classList.toggle('on', state.playing);   // vòng sóng lan ra quanh nút khi đang phát
+  $('rPlayBtn').classList.toggle('on', rd.playing);
   const p = isPlaying();
   $('topPlay').hidden = view === 'sgk';
   $('topPlay').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24">${p ? ICON_STOP : ICON_PLAY}</svg>${p ? 'Dừng' : 'Phát'}`;
@@ -1177,8 +1203,13 @@ function route(path = location.hash.replace('#', '')) {
   if (state.playing) stop();
   if (rd.playing) rStop();
   if (next !== 'nhip') stopCamera();
+  const changed = view !== next;
   view = next;
   document.querySelectorAll('.view').forEach((s) => (s.hidden = s.id !== `view-${next}`));
+  if (changed) {
+    window.scrollTo(0, 0);
+    replay($(`view-${next}`), 'enter');
+  }
   document.querySelectorAll('.tab').forEach((t) =>
     t.setAttribute('aria-selected', t.dataset.view === next ? 'true' : 'false'));
   if (next === 'doc') {
@@ -1237,4 +1268,5 @@ buildDetChips();
 buildGrades();
 buildLegend();
 buildBooks();
+setupReveal();
 route();
