@@ -3,198 +3,200 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BeatPaper</title>
+<title>Lập trình nhịp · BeatPaper</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="topbar">
-  <a class="wordmark" href="#nhip">BeatPaper</a>
-  <nav class="tabs" role="tablist" aria-label="Chọn phần học">
-    <button class="tab" role="tab" data-view="nhip" aria-selected="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="5" height="12" rx="1.5"/><rect x="9.5" y="6" width="5" height="12" rx="1.5"/><rect x="16" y="6" width="5" height="12" rx="1.5"/></svg>
-      Lập trình nhịp
+<header class="bar">
+  <a class="brand" href="#nhip" aria-label="BeatPaper, về Lập trình nhịp">
+    <svg class="logo" viewBox="0 0 92 16" aria-hidden="true">
+      <circle class="lg-r" cx="7" cy="8" r="5"/><rect class="lg-b" x="14" y="3.5" width="9" height="9" rx="1" transform="rotate(45 18.5 8)"/><path class="lg-y" d="M32 2.5 37.5 13h-11z"/><rect class="lg-w" x="40.5" y="3.5" width="9" height="9" rx="1.5"/>
+      <circle class="lg-r" cx="61" cy="8" r="5"/><rect class="lg-b" x="68" y="3.5" width="9" height="9" rx="1" transform="rotate(45 72.5 8)"/><path class="lg-y" d="M86 2.5 91.5 13h-11z"/>
+    </svg>
+    <span>BeatPaper</span>
+  </a>
+
+  <nav class="tabs" role="tablist" aria-label="Phần học">
+    <button class="tab" role="tab" id="tab-nhip" aria-controls="view-nhip" data-view="nhip" aria-selected="true" aria-label="Lập trình nhịp">
+      <span class="long">Lập trình nhịp</span><span class="short">Nhịp</span>
     </button>
-    <button class="tab" role="tab" data-view="doc" aria-selected="false">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
-      Bài đọc nhạc
+    <button class="tab" role="tab" id="tab-doc" aria-controls="view-doc" data-view="doc" aria-selected="false" aria-label="Bài đọc nhạc" tabindex="-1">
+      <span class="long">Bài đọc nhạc</span><span class="short">Đọc nhạc</span>
     </button>
-    <button class="tab" role="tab" data-view="sgk" aria-selected="false">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>
-      Sách giáo khoa
+    <button class="tab" role="tab" id="tab-sgk" aria-controls="view-sgk" data-view="sgk" aria-selected="false" aria-label="Sách giáo khoa" tabindex="-1">
+      <span class="long">Sách giáo khoa</span><span class="short">SGK</span>
     </button>
   </nav>
-  <div class="top-actions">
-    <button class="icon-btn" id="themeBtn" title="Đổi giao diện sáng / tối" aria-label="Đổi giao diện sáng / tối">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+
+  <div class="bar-actions">
+    <details class="keys">
+      <summary>Phím tắt</summary>
+      <dl>
+        <dt>Space</dt><dd>Phát / dừng</dd>
+        <dt>1 – 4</dt><dd>Chọn nhạc cụ</dd>
+        <dt>Ctrl + Z</dt><dd>Hoàn tác</dd>
+        <dt>F</dt><dd>Trình chiếu</dd>
+        <dt>← →</dt><dd>Di chuyển giữa các phách</dd>
+      </dl>
+    </details>
+    <button class="btn" id="presentBtn" aria-pressed="false">Trình chiếu</button>
+    <button class="icon-btn" id="themeBtn" aria-label="Chuyển sang giao diện tối">
+      <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"></svg>
     </button>
-    <button class="pill dark" id="topPlay"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>Phát</button>
   </div>
 </header>
 
-<main class="page">
+<main id="main" class="page">
 
   <!-- ================= Tab 1: Lập trình nhịp ================= -->
-  <section class="view" id="view-nhip" role="tabpanel">
-    <div class="intro copy">
-      <h1>Lập trình nhạc<br>bằng mã màu</h1>
-      <div>
-        <p>16 ô là 16 phách, chia thành 4 ô nhịp 4/4. Chọn một màu ở khay bên dưới rồi chạm (hoặc kéo) qua các ô để viết “mã” cho bản nhạc.</p>
-        <p>Bấm Phát: thanh quét màu xanh đi từ ô 1 đến ô 16 rồi quay lại từ đầu. Chạm vào ô màu nào, nhạc cụ đó vang lên. Ô trắng là phách lặng.</p>
-        <p class="hint">Phím cách: phát / dừng · Phím 1–4: chọn màu</p>
+  <section class="view" id="view-nhip" role="tabpanel" aria-labelledby="tab-nhip">
+    <div class="sheet paint">
+      <div class="head">
+        <h1>Lập trình nhịp <span class="sub">4 ô nhịp 4/4</span></h1>
+        <p class="status" id="stepStatus">Phách 1 / 16 · Ô nhịp 1</p>
+      </div>
+
+      <div class="transport">
+        <button class="play" id="playBtn">
+          <svg id="playIcon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>
+          <span id="playLabel">Phát</span>
+        </button>
+        <div class="tempo">
+          <label for="bpm">Nhịp độ</label>
+          <input type="range" id="bpm" min="60" max="180" value="100" step="1">
+          <div class="tempo-out">
+            <output id="bpmOut" for="bpm">100 phách/phút</output>
+            <span id="tempoTerm">Moderato (vừa phải)</span>
+          </div>
+        </div>
+        <div class="tools">
+          <button class="btn" id="undoBtn" disabled>Hoàn tác</button>
+          <button class="btn" id="clearBtn">Xoá hết</button>
+        </div>
+      </div>
+
+      <p class="hint" id="gridHint">Chọn nhạc cụ, rồi chạm hoặc kéo qua các phách. Bấm Phát để nghe.</p>
+
+      <div class="grid-wrap" id="gridWrap">
+        <div class="score" id="score" role="group" aria-label="16 phách"></div>
+        <div class="playhead" id="playhead" aria-hidden="true"></div>
+      </div>
+
+      <div class="instruments" id="palette" role="radiogroup" aria-label="Nhạc cụ"></div>
+
+      <div class="presets-row">
+        <span class="label" id="presetsLabel">Mẫu nhịp</span>
+        <div class="presets" id="presets" role="group" aria-labelledby="presetsLabel"></div>
       </div>
     </div>
 
-    <div class="panel peach">
-      <div class="sheet">
-        <div class="sheet-head">
-          <span>Bảng lập trình · 16 phách</span>
-          <span class="status" id="stepStatus">Ô 1 / 16</span>
-        </div>
-
-        <div class="grid-wrap" id="gridWrap">
-          <div class="score" id="score"></div>
-          <div class="playhead" id="playhead"></div>
-        </div>
-
-        <div class="tray palette" id="palette" role="group" aria-label="Chọn màu nhạc cụ"></div>
-
-        <div class="controls">
-          <button class="play" id="playBtn" aria-label="Phát">
-            <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>
-          </button>
-          <div class="tempo">
-            <label for="bpm">Tempo</label>
-            <input type="range" id="bpm" min="60" max="180" value="100" step="1">
-            <div class="tempo-out">
-              <output id="bpmOut" for="bpm">100 BPM</output>
-              <span id="tempoTerm">Moderato · Vừa phải</span>
-            </div>
+    <div class="sheet cam">
+      <div class="head">
+        <h2>Quét dải giấy</h2>
+        <p class="status" id="camStatus">Camera đang tắt</p>
+      </div>
+      <div class="cam-layout">
+        <div class="cam-box">
+          <video id="video" playsinline muted></video>
+          <canvas class="overlay" id="overlay"></canvas>
+          <div class="cam-empty" id="camEmpty">
+            <p id="camMsg">Vẽ 16 chấm đỏ, xanh, vàng lên dải giấy trắng. Bật camera và giơ dải vào khung.</p>
+            <p class="cam-err" id="camErr" role="alert"></p>
           </div>
-          <button class="chip" id="clearBtn" title="Đưa tất cả ô về phách lặng">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
-            Xoá hết
-          </button>
         </div>
-
-        <div class="presets-row">
-          <span class="lbl">Thử mẫu:</span>
-          <div class="presets" id="presets"></div>
+        <div class="cam-side">
+          <div class="cam-actions">
+            <button class="btn primary" id="camBtn">Bật camera</button>
+            <button class="btn" id="camWrite" disabled>Ghi vào bảng nhịp</button>
+          </div>
+          <p class="label">Camera đang thấy</p>
+          <div class="chips-det" id="detChips" aria-hidden="true"></div>
+          <p class="hint" id="camHint">Bật camera để bắt đầu.</p>
+          <label class="range-row">
+            <span>Dời khung quét lên / xuống</span>
+            <input type="range" id="stripY" min="15" max="85" value="50">
+          </label>
+          <a class="link" id="stripDl" download="dai-giay-beatpaper.svg">Tải mẫu dải giấy để in</a>
         </div>
       </div>
-    </div>
-
-    <div class="row flip">
-      <div class="copy">
-        <h2>Giơ giấy,<br>nghe ngay nhịp điệu</h2>
-        <p>Vẽ 16 chấm đỏ, xanh dương, vàng lên một dải giấy trắng, mỗi chấm ứng với một phách.</p>
-        <p>Bật camera rồi giơ dải giấy sao cho các chấm nằm trong 16 ô khung. Camera đọc màu từng chấm và đưa vào bảng lập trình. Chỗ để trắng là phách lặng.</p>
-        <p class="hint">Kéo “Vị trí dải” để khung quét trùng với dải giấy.</p>
-      </div>
-
-      <div class="panel sky">
-        <div class="sheet">
-          <div class="sheet-head">
-            <span>Camera quét giấy</span>
-            <span class="status" id="camStatus">Đang tắt</span>
-          </div>
-          <div class="cam-box">
-            <video id="video" playsinline muted></video>
-            <canvas class="overlay" id="overlay"></canvas>
-            <div class="cam-empty" id="camEmpty">Bật camera, rồi giơ dải giấy sao cho các chấm màu nằm trong các ô khung.</div>
-          </div>
-          <div class="chips-det" id="detChips" aria-label="Màu camera đang nhận ra"></div>
-          <div class="cam-row">
-            <button class="pill dark" id="camBtn">Bật camera</button>
-            <label class="toggle"><input type="checkbox" id="camApply" checked> Đưa màu vào bảng</label>
-          </div>
-          <div class="range-row">
-            <span>Vị trí dải</span>
-            <input type="range" id="stripY" min="15" max="85" value="50" aria-label="Vị trí dọc của dải quét">
-          </div>
-          <canvas id="work" hidden></canvas>
-        </div>
-      </div>
+      <canvas id="work" hidden></canvas>
     </div>
   </section>
 
   <!-- ================= Tab 2: Bài đọc nhạc ================= -->
-  <section class="view" id="view-doc" role="tabpanel" hidden>
-    <div class="intro copy">
-      <h1>Bài đọc nhạc<br>bằng mã màu</h1>
-      <ol class="steps">
-        <li><span class="n">1</span><span><b>Chọn lớp và bài</b> giống trong sách giáo khoa. Mỗi nốt có một màu riêng, nốt càng cao thì ô càng nằm cao.</span></li>
-        <li><span class="n">2</span><span><b>Nghe máy đọc mẫu.</b> Máy đếm vào một ô nhịp, ô nốt đang vang sẽ nảy lên.</span></li>
-        <li><span class="n">3</span><span><b>Đọc theo, gõ theo phách.</b> Hạ tempo khi mới tập, chuyển sang “Tiết tấu” để chỉ luyện trường độ.</span></li>
-      </ol>
-    </div>
-
+  <section class="view" id="view-doc" role="tabpanel" aria-labelledby="tab-doc" hidden>
     <div class="reader">
-      <aside class="picker">
-        <div class="grades" id="grades" role="tablist" aria-label="Chọn lớp"></div>
-        <div class="rlist" id="rlist"></div>
+      <aside class="picker" aria-label="Chọn bài đọc nhạc">
+        <div class="grades" id="grades" role="tablist" aria-label="Lớp"></div>
+        <ul class="rlist" id="rlist"></ul>
       </aside>
 
-      <div class="panel lilac">
-        <div class="sheet">
-          <div class="rhead">
-            <div>
-              <h3 id="rTitle"></h3>
-              <div class="tags" id="rTags"></div>
-            </div>
-            <span class="status" id="rStatus"></span>
+      <div class="sheet reading">
+        <div class="head">
+          <div>
+            <h1 id="rTitle"></h1>
+            <p class="meta" id="rMeta"></p>
           </div>
+          <p class="status" id="rStatus"></p>
+        </div>
 
+        <div class="transport">
+          <button class="play" id="rPlayBtn">
+            <svg id="rPlayIcon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>
+            <span id="rPlayLabel">Phát</span>
+          </button>
+          <div class="tempo">
+            <label for="rBpm">Nhịp độ</label>
+            <input type="range" id="rBpm" min="40" max="160" value="92" step="1">
+            <div class="tempo-out">
+              <output id="rBpmOut" for="rBpm">92 phách/phút</output>
+              <span id="rTempoTerm"></span>
+            </div>
+          </div>
+        </div>
+        <div class="options">
+          <div class="seg" role="group" aria-label="Nội dung phát">
+            <button data-mode="melody" aria-pressed="true" title="Phát cả cao độ và trường độ">Giai điệu</button>
+            <button data-mode="rhythm" aria-pressed="false" title="Chỉ gõ trường độ, không có cao độ">Tiết tấu</button>
+          </div>
+          <button class="toggle" data-opt="countIn" aria-pressed="true" title="Đếm 1 ô nhịp trước khi vào bài">Đếm vào</button>
+          <button class="toggle" data-opt="click" aria-pressed="true" title="Gõ đều theo từng phách">Gõ phách</button>
+          <button class="toggle" data-opt="loop" aria-pressed="false" title="Hết bài thì đọc lại từ đầu">Lặp lại</button>
+        </div>
+
+        <div class="legend" id="legend"></div>
+
+        <div class="rscore-wrap">
           <div class="rscore" id="rScore"></div>
-
-          <div class="controls">
-            <button class="play" id="rPlayBtn" aria-label="Phát">
-              <svg id="rPlayIcon" width="20" height="20" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>
-            </button>
-            <div class="tempo">
-              <label for="rBpm">Tempo</label>
-              <input type="range" id="rBpm" min="40" max="160" value="92" step="1">
-              <div class="tempo-out">
-                <output id="rBpmOut" for="rBpm">92 BPM</output>
-                <span id="rTempoTerm"></span>
-              </div>
-            </div>
-          </div>
-          <div class="controls">
-            <div class="seg" role="group" aria-label="Phát giai điệu hay tiết tấu">
-              <button data-mode="melody" aria-pressed="true">Giai điệu</button>
-              <button data-mode="rhythm" aria-pressed="false">Tiết tấu</button>
-            </div>
-            <div class="toggles">
-              <button class="chip" data-opt="countIn" aria-pressed="true">Đếm vào</button>
-              <button class="chip" data-opt="click" aria-pressed="true">Gõ phách</button>
-              <button class="chip" data-opt="loop" aria-pressed="false">Lặp lại</button>
-            </div>
-          </div>
-
-          <div class="legend" id="legend"></div>
+          <div class="count-big" id="countBig" aria-hidden="true"></div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ================= Tab 3: Sách giáo khoa ================= -->
-  <section class="view" id="view-sgk" role="tabpanel" hidden>
-    <div class="intro copy">
-      <h1>Sách giáo khoa<br>Âm nhạc 6 – 9</h1>
-      <div>
-        <p>Bộ sách Kết nối tri thức với cuộc sống. Mở sách điện tử để xem trọn bài học, hoặc vào thẳng các bài đọc nhạc đã chuyển sang mã màu.</p>
-        <p>Mỗi bài đọc nhạc trong ứng dụng có ghi số trang, để em mở sách và đối chiếu với bản nhạc gốc.</p>
+  <section class="view" id="view-sgk" role="tabpanel" aria-labelledby="tab-sgk" hidden>
+    <div class="sheet">
+      <div class="head">
+        <h1>Sách giáo khoa Âm nhạc 6 – 9 <span class="sub">Kết nối tri thức với cuộc sống</span></h1>
       </div>
+      <p class="hint">Mỗi bài trong ứng dụng có ghi số trang để đối chiếu với sách.</p>
+      <ul class="books" id="books"></ul>
+      <p class="note">Sách điện tử mở trên trang của NXB Giáo dục Việt Nam. Bản nhạc trong ứng dụng được chép lại để luyện đọc; chỗ nào khác với sách thì làm theo sách.</p>
     </div>
-    <div class="books" id="books"></div>
-    <p class="note-box">Sách điện tử mở trên trang của Nhà xuất bản Giáo dục Việt Nam (hanhtrangso.nxbgd.vn, taphuan.nxbgd.vn). Bản nhạc trong ứng dụng được chép lại để luyện đọc, nếu có chỗ khác với sách thì làm theo sách.</p>
   </section>
 
 </main>
+
+<div class="toast" id="toast" hidden>
+  <span id="toastMsg"></span>
+  <button class="toast-act" id="toastAct"></button>
+</div>
+<p class="sr-only" id="announcer" role="status" aria-live="polite"></p>
 
 <script src="app.js"></script>
 </body>
