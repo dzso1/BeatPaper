@@ -56,8 +56,13 @@
   <section class="view" id="view-nhip" role="tabpanel" aria-labelledby="tab-nhip">
     <div class="sheet paint">
       <div class="head">
-        <h1>Lập trình nhịp <span class="sub">4 ô nhịp 4/4</span></h1>
-        <p class="status" id="stepStatus">Phách 1 / 16 · Ô nhịp 1</p>
+        <h1>Lập trình nhịp <span class="sub" id="meterInfo">4 ô nhịp 4/4</span></h1>
+        <p class="status" id="stepStatus">Ô nhịp 1 / 4 · đếm 1</p>
+      </div>
+
+      <div class="meter-row">
+        <span class="label" id="meterLabel">Số chỉ nhịp</span>
+        <div class="seg meters" id="meters" role="group" aria-labelledby="meterLabel"></div>
       </div>
 
       <div class="transport">
@@ -120,7 +125,7 @@
             <span>Dời khung quét lên / xuống</span>
             <input type="range" id="stripY" min="15" max="85" value="50">
           </label>
-          <a class="link" id="stripDl" download="dai-giay-beatpaper.svg">Tải mẫu dải giấy để in</a>
+          <a class="link" id="stripDl" href="#nhip" download="dai-giay-beatpaper.svg">Tải mẫu dải giấy để in</a>
         </div>
       </div>
       <canvas id="work" hidden></canvas>
@@ -159,6 +164,13 @@
           </div>
         </div>
         <div class="options">
+          <div class="seg" role="group" aria-label="Cách xem bản nhạc">
+            <button data-look="blocks" aria-pressed="true" title="Mỗi nốt là một khối màu, dài theo trường độ">Khối màu</button>
+            <button data-look="color" aria-pressed="false" title="Nốt nhạc trên khuông, đầu nốt tô màu">Khuông có màu</button>
+            <button data-look="staff" aria-pressed="false" title="Nốt nhạc trên khuông như trong sách">Khuông nhạc</button>
+          </div>
+        </div>
+        <div class="options">
           <div class="seg" role="group" aria-label="Nội dung phát">
             <button data-mode="melody" aria-pressed="true" title="Phát cả cao độ và trường độ">Giai điệu</button>
             <button data-mode="rhythm" aria-pressed="false" title="Chỉ gõ trường độ, không có cao độ">Tiết tấu</button>
@@ -170,8 +182,11 @@
 
         <div class="legend" id="legend"></div>
 
-        <div class="rscore-wrap">
+        <div class="rscore-wrap" id="rWrap">
           <div class="rscore" id="rScore"></div>
+          <div class="rstaff" id="rStaff" hidden></div>
+          <p class="staff-msg" id="staffMsg" role="status" hidden></p>
+          <div class="staff-cursor" id="staffCursor" hidden></div>
           <div class="count-big" id="countBig" aria-hidden="true"></div>
         </div>
       </div>

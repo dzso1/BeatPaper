@@ -159,13 +159,11 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .tools { display: flex; gap: 8px; margin-left: auto; }
 
 /* ---------- Tab 1: dải 16 phách ---------- */
-.grid-wrap { position: relative; container-type: inline-size; margin-top: 16px; }
+.meter-row { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.meters button { min-width: 52px; font-variant-numeric: tabular-nums; }
+.grid-wrap { position: relative; margin-top: 16px; }
+/* --cell do JS đặt: chọn 4, 2 hay 1 ô nhịp mỗi hàng để ô đủ to mà chạm */
 .score { --cell: 52px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 20px 0; }
-/* Ô co giãn theo bề rộng: 4 ô nhịp một hàng, rồi 2, rồi 1 */
-/* phần cố định mỗi hàng: số chỉ nhịp + lề và khe trong từng ô nhịp + vạch nhịp */
-@container (min-width: 874px) { .score { --cell: min(var(--cell-max, 64px), calc((100cqw - 200px) / 16)); } }
-@container (min-width: 446px) and (max-width: 873.98px) { .score { --cell: min(68px, calc((100cqw - 116px) / 8)); } }
-@container (max-width: 445.98px) { .score { --cell: min(64px, calc((100cqw - 76px) / 4)); } }
 
 .timesig {
   display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -216,7 +214,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .inst[data-v="Y"] svg { color: var(--yellow); }
 .inst[data-v="W"] svg { color: var(--line); }
 .inst b { display: block; font-size: 16px; line-height: 1.25; }
-.inst small { display: block; font-size: 14px; color: var(--ink-3); line-height: 1.25; }
 .inst kbd { margin-left: auto; font: 600 13px var(--font); color: var(--ink-3); }
 .inst[aria-checked="true"] { border: 2.5px solid var(--ink); background: var(--tray); padding: 7px 11px; }
 @media (pointer: coarse) { .inst kbd { display: none; } }
@@ -229,10 +226,13 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
   .inst { flex-direction: column; justify-content: center; gap: 4px; min-height: 64px; padding: 6px 4px; text-align: center; }
   .inst[aria-checked="true"] { padding: 5px 3px; }
   .inst b { font-size: 14px; }
-  .inst small { display: none; }
   .tempo { min-width: 0; flex-basis: 100%; }
   .tempo-out { min-width: 0; }
   .legend .x { display: none; }
+  .options > .seg { display: flex; flex: 1 1 100%; }
+  .options > .seg button { flex: 1; padding: 0 8px; }
+  .meters { display: flex; flex: 1 1 100%; }
+  .meters button { flex: 1; min-width: 0; }
 }
 
 .presets-row { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
@@ -255,7 +255,7 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .cam-side .hint { margin: 0; }
 .chips-det { display: flex; gap: 3px; }
 .chips-det span { flex: 1; height: 12px; border-radius: 2px; background: var(--tray); border: 1px solid var(--rule); }
-.chips-det span:nth-child(4n):not(:last-child) { margin-right: 6px; }
+.chips-det span.bar-end { margin-right: 6px; }
 .chips-det span[data-v="R"] { background: var(--red); border-color: var(--red); }
 .chips-det span[data-v="B"] { background: var(--blue); border-color: var(--blue); }
 .chips-det span[data-v="Y"] { background: var(--yellow); border-color: var(--yellow-edge); }
@@ -352,6 +352,20 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .nt[data-oct="lo"]::after { bottom: -8px; }
 .nt.now { outline: 3px solid var(--ink); outline-offset: 2px; z-index: 1; }
 
+/* Khuông nhạc (vẽ bởi abcjs). Màu theo mực của giao diện, đầu nốt tô màu ở chế độ "Khuông có màu" */
+.rstaff { color: var(--ink); min-height: 120px; }
+.rstaff svg { display: block; max-width: 100%; height: auto; }
+.rstaff .abc-c-C { fill: var(--n-C); } .rstaff .abc-c-D { fill: var(--n-D); }
+.rstaff .abc-c-E { fill: var(--n-E); stroke: var(--n-E-edge); stroke-width: .8px; }
+.rstaff .abc-c-F { fill: var(--n-F); } .rstaff .abc-c-G { fill: var(--n-G); }
+.rstaff .abc-c-A { fill: var(--n-A); } .rstaff .abc-c-B { fill: var(--n-B); }
+.staff-msg { margin: 0; padding: 24px 0; font-size: 16px; color: var(--ink-2); }
+.staff-msg .link { border: none; background: none; padding: 0; font-size: inherit; text-decoration: underline; }
+.staff-cursor {
+  position: absolute; top: 0; left: 0; pointer-events: none;
+  border: 3px solid var(--ink); border-radius: 6px;
+}
+
 /* Số đếm vào lớn, giữa bản nhạc */
 .count-big {
   position: absolute; inset: 0; display: grid; place-items: start center; padding-top: 4px; pointer-events: none;
@@ -412,7 +426,6 @@ body.present .page { max-width: none; padding: 12px 24px; }
 body.present .reader { grid-template-columns: minmax(0, 1fr); }
 body.present .head h1, body.present .reading .head h1 { font-size: clamp(28px, 4vh, 44px); }
 body.present .status { font-size: clamp(18px, 3vh, 32px); }
-body.present .score { --cell-max: 15vh; }
 body.present .count { font-size: clamp(14px, 2.4vh, 24px); }
 body.present .instruments .inst { min-height: 64px; }
 body.present .rscore { --u: clamp(26px, 4.6vh, 56px); --lane: clamp(112px, 26vh, 300px); --nh: clamp(26px, 6vh, 64px); gap: 40px 0; }

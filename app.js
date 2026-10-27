@@ -325,17 +325,53 @@ function replay(el, cls) {
 }
 
 /* =========================================================
-   TAB 1 · Lập trình nhịp (16 phách)
+   TAB 1 · Lập trình nhịp (4 ô nhịp, chọn được số chỉ nhịp)
    ========================================================= */
-const STEPS = 16;          // 16 phách
-const BEATS_PER_BAR = 4;   // nhịp 4/4
+const BARS = 4;   // dải luôn có 4 ô nhịp
+
+// Mỗi ô là một đơn vị của mẫu số: x/4 → nốt đen, x/2 → nốt trắng, x/8 → nốt móc đơn.
+// Ô đầu mỗi ô nhịp luôn nhấn mạnh; "accent" là các ô nhấn vừa (tính trong ô nhịp).
+const METERS = {
+  '2/4': { unit: 'nốt đen', accent: [], presets: [
+    { name: 'Mạnh – nhẹ', bpm: 96,  cells: 'RB RB RB RB' },
+    { name: 'Hành khúc',  bpm: 112, cells: 'RY RY RB RY' },
+    { name: 'Hỏi – đáp',  bpm: 100, cells: 'YY YW BB BW' },
+  ] },
+  '3/4': { unit: 'nốt đen', accent: [], presets: [
+    { name: 'Mạnh – nhẹ – nhẹ', bpm: 104, cells: 'RBB RBB RBB RBB' },
+    { name: 'Điệu valse',       bpm: 132, cells: 'RYY RYY RYY RYW' },
+    { name: 'Hỏi – đáp',        bpm: 100, cells: 'RYY RWW BBB YWW' },
+  ] },
+  '4/4': { unit: 'nốt đen', accent: [2], presets: [
+    { name: 'Mạnh – nhẹ', bpm: 96,  cells: 'RBYB RBYB RBYB RBYB' },
+    { name: 'Trống đội',  bpm: 120, cells: 'RWYW RRYW RWYW RRYY' },
+    { name: 'Hỏi – đáp',  bpm: 108, cells: 'YYYW BBBW YYYW RRRW' },
+  ] },
+  '2/2': { unit: 'nốt trắng', accent: [], presets: [
+    { name: 'Mạnh – nhẹ', bpm: 72, cells: 'RY RY RY RY' },
+    { name: 'Hành khúc',  bpm: 84, cells: 'RB RY RB RY' },
+  ] },
+  '3/8': { unit: 'nốt móc đơn', accent: [], presets: [
+    { name: 'Mạnh – nhẹ – nhẹ', bpm: 144, cells: 'RBB RBB RBB RBB' },
+    { name: 'Đung đưa',         bpm: 132, cells: 'RWY RWY RBY RWW' },
+  ] },
+  '6/8': { unit: 'nốt móc đơn', accent: [3], presets: [
+    { name: 'Mạnh – nhẹ', bpm: 160, cells: 'RBBYBB RBBYBB RBBYBB RBBYBB' },
+    { name: 'Chèo thuyền', bpm: 144, cells: 'RWBYWB RWBYWB RWBYWB RRBYWW' },
+  ] },
+};
+const METER_ORDER = ['2/4', '3/4', '4/4', '2/2', '3/8', '6/8'];
+let METER = '4/4';
+let BEATS_PER_BAR = 4;   // số ô trong một ô nhịp
+let STEPS = 16;          // tổng số ô của dải
+let PRESETS = METERS[METER].presets;
 
 // R = đỏ, B = xanh dương, Y = vàng, W = để trắng (phách lặng)
 const INSTRUMENTS = {
-  R: { name: 'Trống cái', say: 'bùm' },
-  B: { name: 'Chũm chọe', say: 'xì' },
-  Y: { name: 'Vỗ tay',    say: 'bốp' },
-  W: { name: 'Lặng',      say: 'tẩy về phách lặng' },
+  R: { name: 'Trống cái' },
+  B: { name: 'Chũm chọe' },
+  Y: { name: 'Vỗ tay' },
+  W: { name: 'Lặng' },
 };
 const ORDER = ['R', 'B', 'Y', 'W'];
 
@@ -346,12 +382,6 @@ const ICONS = {
   Y: '<path d="M12 2.8 21.5 20H2.5z" fill="currentColor" style="stroke:var(--yellow-edge)" stroke-width="1.6" stroke-linejoin="round"/>',
   W: '<rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 2.5"/>',
 };
-
-const PRESETS = [
-  { name: 'Mạnh – nhẹ', bpm: 96,  cells: 'RBYB RBYB RBYB RBYB' },
-  { name: 'Trống đội',  bpm: 120, cells: 'RWYW RRYW RWYW RRYY' },
-  { name: 'Hỏi – đáp',  bpm: 108, cells: 'YYYW BBBW YYYW RRRW' },
-];
 
 const state = {
   cells: Array(STEPS).fill('W'),   // mặc định: tất cả là phách lặng
@@ -371,7 +401,8 @@ function buildGrid() {
   const ts = document.createElement('div');
   ts.className = 'timesig';
   ts.setAttribute('aria-hidden', 'true');
-  ts.innerHTML = `<span>${BEATS_PER_BAR}</span><span>4</span>`;
+  const [mn, md] = METER.split('/');
+  ts.innerHTML = `<span>${mn}</span><span>${md}</span>`;
   scoreEl.appendChild(ts);
 
   cellEls = [];
@@ -405,7 +436,7 @@ function renderCells() {
     const first = !el.dataset.v;
     el.dataset.v = v;
     el.innerHTML = v === 'W' ? '' : `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[v]}</svg>`;
-    el.setAttribute('aria-label', `Phách ${i + 1}: ${v === 'W' ? 'lặng' : INSTRUMENTS[v].name}`);
+    el.setAttribute('aria-label', `${cellPlace(i)}: ${v === 'W' ? 'lặng' : INSTRUMENTS[v].name}`);
     if (!first) replay(el, 'pop');
   });
   // Gợi ý chỉ cần khi lưới còn trống; giữ chỗ để lưới không nhảy dưới ngón tay
@@ -418,7 +449,7 @@ function buildPalette() {
     const info = INSTRUMENTS[k];
     return `<button class="inst" role="radio" data-v="${k}" aria-checked="false" title="${k === 'W' ? 'Tẩy về phách lặng' : info.name}">
       <svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg>
-      <span><b>${info.name}</b><small>${info.say}</small></span>
+      <b>${info.name}</b>
       <kbd aria-hidden="true">${n + 1}</kbd>
     </button>`;
   }).join('');
@@ -449,6 +480,7 @@ function setBrush(k) {
 
 function buildPresets() {
   const box = $('presets');
+  box.innerHTML = '';
   PRESETS.forEach((p, n) => {
     const b = document.createElement('button');
     b.className = 'chip';
@@ -464,9 +496,74 @@ function markPreset() {
     b.setAttribute('aria-pressed', n === state.preset ? 'true' : 'false'));
 }
 
+/* ----- Số chỉ nhịp: dựng lại dải theo số ô của một ô nhịp ----- */
+function buildMeters() {
+  const box = $('meters');
+  box.innerHTML = METER_ORDER.map((m) =>
+    `<button data-meter="${m}" aria-pressed="${m === METER}">${m}</button>`).join('');
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-meter]');
+    if (b && b.dataset.meter !== METER) setMeter(b.dataset.meter);
+  });
+}
+
+// Đổi nhịp và dựng lại mọi thứ phụ thuộc số ô (lưới, mẫu, camera, mẫu giấy in)
+function applyMeter(m) {
+  if (state.playing) stop();
+  METER = m;
+  BEATS_PER_BAR = +m.split('/')[0];
+  STEPS = BEATS_PER_BAR * BARS;
+  PRESETS = METERS[m].presets;
+  focusIdx = 0;
+  lastStep = -1;
+  buildGrid();
+  buildPresets();
+  $('meters').querySelectorAll('[data-meter]').forEach((b) =>
+    b.setAttribute('aria-pressed', b.dataset.meter === m ? 'true' : 'false'));
+  $('meterInfo').textContent = `${BARS} ô nhịp ${m} · mỗi ô là 1 ${METERS[m].unit}`;
+  $('camMsg').textContent = `Vẽ ${STEPS} chấm đỏ, xanh, vàng lên dải giấy trắng. Bật camera và giơ dải vào khung.`;
+  detected = [];
+  camHist.length = 0;
+  buildDetChips();
+  buildStripDownload();
+  setBpm(state.bpm);
+  setStepStatus(0);
+  layoutGrid();
+}
+
+function setMeter(m) {
+  pushUndo();
+  applyMeter(m);
+  state.cells = Array(STEPS).fill('W');
+  state.preset = -1;
+  renderCells();
+  markPreset();
+  showToast(`Đã đổi sang nhịp ${m}`, 'Hoàn tác', undo);
+  announce(`Nhịp ${m}, ${STEPS} ô`);
+}
+
+// Chọn số ô nhịp mỗi hàng (4, 2 hoặc 1) sao cho ô đủ to để chạm
+function layoutGrid() {
+  const w = $('gridWrap').clientWidth;
+  if (!w) return;
+  const present = document.body.classList.contains('present');
+  const max = present ? Math.min(innerHeight * 0.15, 140) : 64;
+  const min = 44;
+  const cellFor = (bpr) => {
+    const perBar = 18 + 6 * (BEATS_PER_BAR - 1);          // lề, khe giữa các ô, vạch nhịp
+    return Math.floor((w - 40 - bpr * perBar) / (bpr * BEATS_PER_BAR));
+  };
+  let cell = cellFor(1);
+  for (const bpr of [4, 2]) {
+    if (cellFor(bpr) >= min) { cell = cellFor(bpr); break; }
+  }
+  scoreEl.style.setProperty('--cell', `${Math.max(32, Math.min(max, cell))}px`);
+}
+if ('ResizeObserver' in window) new ResizeObserver(() => layoutGrid()).observe($('gridWrap'));
+
 /* ----- Hoàn tác: lưu trạng thái trước mỗi thao tác thay đổi lưới ----- */
 const undoStack = [];
-const snapshot = () => ({ cells: state.cells.slice(), bpm: state.bpm, preset: state.preset });
+const snapshot = () => ({ cells: state.cells.slice(), bpm: state.bpm, preset: state.preset, meter: METER });
 
 function pushUndo(snap = snapshot()) {
   undoStack.push(snap);
@@ -477,6 +574,7 @@ function pushUndo(snap = snapshot()) {
 function undo() {
   const s = undoStack.pop();
   if (!s) return;
+  if (s.meter !== METER) applyMeter(s.meter);
   state.cells = s.cells;
   state.preset = s.preset;
   setBpm(s.bpm);
@@ -590,8 +688,8 @@ function scheduler() {
   while (nextTime < ctx.currentTime + SCHEDULE_AHEAD) {
     const dur = 60 / state.bpm;
     const beat = nextStep % BEATS_PER_BAR;
-    // phách 1 mạnh, phách 3 mạnh vừa, phách 2 và 4 nhẹ
-    const vel = beat === 0 ? 1 : beat === 2 ? 0.82 : 0.68;
+    // ô đầu ô nhịp mạnh, ô nhấn vừa (4/4: phách 3, 6/8: đếm 4) mạnh vừa, còn lại nhẹ
+    const vel = beat === 0 ? 1 : METERS[METER].accent.includes(beat) ? 0.82 : 0.68;
     playVoice(state.cells[nextStep], nextTime, vel, bus);
     queue.push({ step: nextStep, time: nextTime, dur });
     nextTime += dur;
@@ -633,12 +731,16 @@ function stop() {
 function setBpm(v) {
   state.bpm = v;
   $('bpm').value = v;
-  $('bpmOut').textContent = `${v} phách/phút`;
-  $('tempoTerm').textContent = tempoTerm(v);
+  // Nhịp x/8 đếm theo móc đơn nên không gắn thuật ngữ nhịp độ (vốn tính theo phách)
+  const eighths = METER.endsWith('/8');
+  $('bpmOut').textContent = `${v} ${eighths ? 'móc đơn' : 'phách'}/phút`;
+  $('tempoTerm').textContent = eighths ? 'Đếm theo nốt móc đơn' : tempoTerm(v);
 }
 
+// "Ô nhịp 2 / 4 · đếm 3": khớp với hàng số đếm dưới mỗi ô nhịp
+const cellPlace = (i) => `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}, đếm ${(i % BEATS_PER_BAR) + 1}`;
 function setStepStatus(i) {
-  $('stepStatus').textContent = `Phách ${i + 1} / ${STEPS} · Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}`;
+  $('stepStatus').textContent = `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1} / ${BARS} · đếm ${(i % BEATS_PER_BAR) + 1}`;
 }
 
 /* ----- Con trỏ phách: vạch mực dưới ô đang vang, theo đúng đồng hồ âm thanh ----- */
@@ -830,7 +932,11 @@ function drawOverlay(zs) {
 function buildDetChips() {
   const box = $('detChips');
   box.innerHTML = '';
-  for (let i = 0; i < STEPS; i++) box.appendChild(document.createElement('span'));
+  for (let i = 0; i < STEPS; i++) {
+    const s = document.createElement('span');
+    if (i % BEATS_PER_BAR === BEATS_PER_BAR - 1 && i < STEPS - 1) s.className = 'bar-end';
+    box.appendChild(s);
+  }
   updateDetChips();
 }
 function updateDetChips() {
@@ -896,20 +1002,25 @@ async function toggleCamera() {
   }
 }
 
-// Mẫu dải giấy 16 ô để in (khổ A4 ngang), tạo ngay trên máy
+// Mẫu dải giấy để in (khổ A4 ngang) theo nhịp đang chọn, tạo ngay trên máy
 function buildStripDownload() {
-  const cell = 14, gap = 3, groupGap = 7, x0 = 10;
+  const w = 297, x0 = 10, gap = 2.5, groupGap = 7;
+  const cell = Math.min(14, (w - 2 * x0 - (BARS - 1) * groupGap - (STEPS - BARS) * gap) / STEPS);
   let x = x0, rects = '', nums = '';
   for (let i = 0; i < STEPS; i++) {
-    rects += `<rect x="${x}" y="14" width="${cell}" height="${cell}" rx="1.5" fill="#fff" stroke="#555" stroke-width="0.4"/>`;
-    nums += `<text x="${x + cell / 2}" y="34" font-size="3.6" text-anchor="middle" fill="#555"${i % 4 === 0 ? ' font-weight="700"' : ''}>${(i % 4) + 1}</text>`;
-    x += cell + (i % 4 === 3 ? groupGap : gap);
+    const k = i % BEATS_PER_BAR;
+    rects += `<rect x="${x.toFixed(2)}" y="14" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}" rx="1.5" fill="#fff" stroke="#555" stroke-width="0.4"/>`;
+    nums += `<text x="${(x + cell / 2).toFixed(2)}" y="${(18 + cell).toFixed(2)}" font-size="3.6" text-anchor="middle" fill="#555"${k === 0 ? ' font-weight="700"' : ''}>${k + 1}</text>`;
+    x += cell + (k === BEATS_PER_BAR - 1 ? groupGap : gap);
   }
-  const w = 297;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="44mm" viewBox="0 0 ${w} 44" font-family="Arial, sans-serif">
-<text x="${x0}" y="9" font-size="4" fill="#333">BeatPaper · dải 16 phách (4 ô nhịp 4/4) · tô chấm đỏ = trống cái, xanh = chũm chọe, vàng = vỗ tay, để trắng = lặng</text>
+<text x="${x0}" y="9" font-size="4" fill="#333">BeatPaper · dải ${STEPS} ô (${BARS} ô nhịp ${METER}) · tô chấm đỏ = trống cái, xanh = chũm chọe, vàng = vỗ tay, để trắng = lặng</text>
 ${rects}${nums}</svg>`;
-  $('stripDl').href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  const a = $('stripDl');
+  if (a.href.startsWith('blob:')) URL.revokeObjectURL(a.href);
+  a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  a.download = `dai-giay-beatpaper-${METER.replace('/', '-')}.svg`;
+  a.textContent = `Tải mẫu dải giấy ${METER} để in`;
 }
 
 $('camBtn').addEventListener('click', toggleCamera);
@@ -922,7 +1033,7 @@ const SOLFA = { C: 'Đô', D: 'Rê', E: 'Mi', F: 'Fa', G: 'Son', A: 'La', B: 'Si
 const LETTERS = 'CDEFGAB';
 const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
-const rOpt = { mode: 'melody', countIn: true, click: true, loop: false };
+const rOpt = { mode: 'melody', countIn: true, click: true, loop: false, look: 'blocks' };
 const rd = {
   grade: 7, reading: null, bars: [], mi: null, events: [], total: 0, firstIdx: 0,
   bpm: 92, playing: false, idx: 0, pos: 0, time: 0, endTime: 0, drawQ: [], bus: null, cur: null,
@@ -1015,7 +1126,7 @@ function buildTimeline() {
     events.push({ start: pos, type: 'bar', bar: bi });
     let x = pos;
     bar.items.forEach((it) => {
-      events.push({ start: x, type: 'vis', el: it.el });
+      events.push({ start: x, type: 'vis', it });
       if (it.rest) held = null;
       else if (held && held.tie && held.midi === it.midi) { held.dur += it.dur; held.tie = it.tie; }
       else { held = { start: x, type: 'note', midi: it.midi, dur: it.dur, tie: it.tie }; events.push(held); }
@@ -1202,9 +1313,176 @@ function selectReading(r) {
 function refreshScore() {
   if (!rd.reading) return;
   if (rd.playing) rStop();
-  renderScore();
+  const blocks = rOpt.look === 'blocks';
+  $('rScore').hidden = !blocks;
+  $('rStaff').hidden = blocks;
+  $('legend').hidden = rOpt.look === 'staff';
+  if (blocks) { $('staffMsg').hidden = true; renderScore(); }
+  else renderStaff();
   buildTimeline();
 }
+
+/* ----- Nốt đang vang: khối màu sáng viền, hoặc khung quanh nốt trên khuông ----- */
+function setCurrent(it) {
+  if (rd.cur && rd.cur.el) rd.cur.el.classList.remove('now');
+  rd.cur = it;
+  const cursor = $('staffCursor');
+  if (!it) { cursor.hidden = true; return; }
+  if (rOpt.look === 'blocks') { if (it.el) it.el.classList.add('now'); return; }
+  const els = (it.staffEls || []).filter((e) => e.tagName !== 'text');
+  if (!els.length) { cursor.hidden = true; return; }
+  const wrap = $('rWrap').getBoundingClientRect();
+  const r = els.map((e) => e.getBoundingClientRect())
+    .reduce((a, b) => ({ left: Math.min(a.left, b.left), top: Math.min(a.top, b.top), right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom) }));
+  cursor.style.transform = `translate(${r.left - wrap.left - 5}px, ${r.top - wrap.top - 5}px)`;
+  cursor.style.width = `${r.right - r.left + 10}px`;
+  cursor.style.height = `${r.bottom - r.top + 10}px`;
+  cursor.hidden = false;
+}
+
+/* ----- Khuông nhạc: đổi bài sang ký hiệu ABC rồi để thư viện abcjs vẽ ----- */
+const ABCJS_URL = 'https://cdn.jsdelivr.net/npm/abcjs@6.5.2/dist/abcjs-basic-min.js';
+let abcLoading = null;
+let staffToken = 0;
+
+// Chỉ tải thư viện khi có người chọn xem khuông nhạc
+function loadAbc() {
+  if (window.ABCJS) return Promise.resolve();
+  if (!abcLoading) {
+    abcLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = ABCJS_URL;
+      s.onload = resolve;
+      s.onerror = () => { abcLoading = null; s.remove(); reject(new Error('abcjs')); };
+      document.head.appendChild(s);
+    });
+  }
+  return abcLoading;
+}
+
+// C4 = "C", C5 = "c", C6 = "c'", B3 = "B,"
+function abcPitch(it) {
+  const base = it.oct >= 5 ? it.letter.toLowerCase() : it.letter;
+  return base + (it.oct >= 6 ? "'".repeat(it.oct - 5) : it.oct <= 3 ? ','.repeat(4 - it.oct) : '');
+}
+// Trường độ tính theo móc đơn, khớp với L:1/8 của ABC
+function abcDur(d) {
+  if (d === 1) return '';
+  if (Number.isInteger(d)) return String(d);
+  if (Number.isInteger(d * 2)) return `${d * 2}/2`;
+  return `${Math.round(d * 4)}/4`;
+}
+const ABC_ACC = { '#': '^', b: '_', '': '=' };
+
+function buildAbc() {
+  const { bars, mi } = rd;
+  let music = '';
+  const words = [];
+  let prevItem = null;
+  bars.forEach((bar, bi) => {
+    const accs = {};          // dấu hoá bất thường còn hiệu lực trong ô nhịp
+    if (bi === 0 && bar.repeatStart) music += '|: ';
+    if (bar.volta) music += `[${bar.volta} `;
+    const off = bi === 0 && bar.len < mi.barLen ? mi.barLen - bar.len : 0;
+    let p = off;
+    let prev = null;
+    bar.items.forEach((it) => {
+      // các nốt móc trong cùng một phách viết liền nhau để được nối đuôi (beam)
+      const sameBeat = prev && Math.floor((p + 1e-6) / mi.beatLen) === Math.floor((p - prev.dur + 1e-6) / mi.beatLen);
+      const beam = prev && sameBeat && prev.dur < 2 && it.dur < 2 && !prev.rest && !it.rest;
+      if (prev && !beam) music += ' ';
+      if (it.rest) {
+        music += 'z' + abcDur(it.dur);
+      } else {
+        const key = it.letter + it.oct;
+        let acc = '';
+        if ((accs[key] || '') !== it.acc) { acc = ABC_ACC[it.acc]; accs[key] = it.acc; }
+        music += acc + abcPitch(it) + abcDur(it.dur) + (it.tie ? '-' : '');
+        const cont = prevItem && !prevItem.rest && prevItem.tie && prevItem.midi === it.midi;
+        words.push(cont ? '*' : (SOLFA[it.letter] + (it.acc === '#' ? '♯' : it.acc === 'b' ? '♭' : '')).toLowerCase());
+      }
+      p += it.dur;
+      prev = it;
+      prevItem = it;
+    });
+    const last = bi === bars.length - 1;
+    if (bar.repeatEnd) music += ' :|';
+    else if (last) music += ' |]';
+    else if (bars[bi + 1].repeatStart) music += ' |:';
+    else music += ' |';
+    music += ' ';
+  });
+  return `X:1\nM:${rd.reading.meter}\nL:1/8\nK:C\n${music.trim()}\nw:${words.join(' ')}\n`;
+}
+
+async function renderStaff() {
+  const box = $('rStaff');
+  const msg = $('staffMsg');
+  const token = ++staffToken;
+  rd.bars.forEach((b) => b.items.forEach((it) => { it.staffEls = []; }));
+  if (!window.ABCJS) {
+    box.innerHTML = '';
+    msg.textContent = 'Đang tải khuông nhạc…';
+    msg.hidden = false;
+    try {
+      await loadAbc();
+    } catch (e) {
+      if (token !== staffToken) return;
+      msg.innerHTML = 'Không tải được khuông nhạc. Kiểm tra mạng rồi <button class="link" id="staffRetry">thử lại</button>, hoặc xem dạng Khối màu.';
+      $('staffRetry').addEventListener('click', refreshScore);
+      return;
+    }
+    if (token !== staffToken) return;   // người dùng đã đổi bài / cách xem trong lúc tải
+  }
+  msg.hidden = true;
+  const present = document.body.classList.contains('present');
+  // đo khung cha: abcjs tự gắn bề rộng cố định lên khung vẽ của nó sau mỗi lần vẽ
+  const width = $('rWrap').clientWidth;
+  const scale = present ? Math.max(1.4, Math.min(2.2, innerHeight / 480)) : width < 520 ? 0.95 : 1.2;
+  const tune = window.ABCJS.renderAbc(box, buildAbc(), {
+    scale,
+    staffwidth: Math.max(220, width / scale - 20),
+    wrap: { minSpacing: 1.6, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
+    paddingtop: 4, paddingbottom: 4, paddingleft: 2, paddingright: 2,
+    format: { vocalfont: 'Be Vietnam Pro 13', annotationfont: 'Be Vietnam Pro 12' },
+  })[0];
+  // Ghép từng nốt trên khuông với nốt trong dữ liệu (cùng thứ tự)
+  const notes = [];
+  tune.lines.forEach((line) => (line.staff || []).forEach((st) => st.voices.forEach((v) => v.forEach((el) => {
+    if (el.el_type === 'note') notes.push(el);
+  }))));
+  const items = rd.bars.flatMap((b) => b.items);
+  items.forEach((it, k) => {
+    it.staffEls = (notes[k] && notes[k].abselem && notes[k].abselem.elemset) || [];
+    // "Khuông có màu": chỉ tô đầu nốt, tên nốt bên dưới vẫn màu mực cho dễ đọc
+    if (rOpt.look === 'color' && !it.rest) {
+      it.staffEls.forEach((e) => e.querySelectorAll('.abcjs-notehead').forEach((h) => h.classList.add(`abc-c-${it.letter}`)));
+    }
+  });
+  box.setAttribute('role', 'img');
+  box.setAttribute('aria-label', scoreText());
+}
+
+// Vẽ lại khuông khi bề rộng thay đổi (xoay máy, thu nhỏ cửa sổ)
+let staffW = 0;
+if ('ResizeObserver' in window) {
+  new ResizeObserver(() => {
+    const w = $('rWrap').clientWidth;
+    if (rOpt.look !== 'blocks' && rd.reading && Math.abs(w - staffW) > 24) {
+      staffW = w;
+      if (!rd.playing) refreshScore();
+    }
+  }).observe($('rWrap'));
+}
+
+function setLook(look) {
+  rOpt.look = look;
+  document.querySelectorAll('[data-look]').forEach((b) =>
+    b.setAttribute('aria-pressed', b.dataset.look === look ? 'true' : 'false'));
+  try { localStorage.setItem('beatpaper-look', look); } catch (e) {}
+  refreshScore();
+}
+document.querySelectorAll('[data-look]').forEach((b) => b.addEventListener('click', () => setLook(b.dataset.look)));
 
 function rStatusIdle() {
   $('rStatus').textContent = `${rd.bars.length} ô nhịp`;
@@ -1253,7 +1531,7 @@ function fire(e, t) {
     if (rOpt.mode === 'melody') tone(e.midi, t, e.dur * spe(), 1, rd.bus);
     else woodblock(t, 1, rd.bus);
   }
-  else if (e.type === 'vis') rd.drawQ.push({ t, el: e.el });
+  else if (e.type === 'vis') rd.drawQ.push({ t, it: e.it });
   else if (e.type === 'bar') rd.drawQ.push({ t, bar: e.bar });
 }
 
@@ -1283,8 +1561,7 @@ function rStop() {
   rd.playing = false;
   rd.drawQ = [];
   cancelAnimationFrame(rRaf);
-  if (rd.cur) rd.cur.classList.remove('now');
-  rd.cur = null;
+  setCurrent(null);
   $('countBig').innerHTML = '';
   rStatusIdle();
   setPlayUI();
@@ -1306,10 +1583,8 @@ function rDraw() {
         if (rOpt.countIn) announce(`Đang phát ${readingTitle(rd.reading)}`);
       }
       $('rStatus').textContent = `Ô nhịp ${d.bar + 1} / ${rd.bars.length}`;
-    } else if (d.el) {
-      if (rd.cur) rd.cur.classList.remove('now');
-      rd.cur = d.el;
-      d.el.classList.add('now');
+    } else if (d.it) {
+      setCurrent(d.it);
     }
   }
 }
@@ -1441,7 +1716,7 @@ function setPresent(on) {
   }
   if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   if (view === 'nhip' && state.playing && lastStep >= 0) requestAnimationFrame(() => placePlayhead(lastStep));
-  requestAnimationFrame(refreshScore);
+  requestAnimationFrame(() => { layoutGrid(); refreshScore(); });
 }
 $('presentBtn').addEventListener('click', () => setPresent(!document.body.classList.contains('present')));
 // Bấm Esc thoát toàn màn hình thì cũng thoát trình chiếu
@@ -1500,16 +1775,21 @@ try {
 } catch (e) {}
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', setThemeUI);
 
-buildGrid();
+buildMeters();
 buildPalette();
-buildPresets();
+applyMeter(METER);
 renderCells();
-setBpm(state.bpm);
-setStepStatus(0);
-buildDetChips();
-buildStripDownload();
 buildGrades();
 buildLegend();
 buildBooks();
 setThemeUI();
+// Nhớ cách xem bài đọc nhạc lần trước
+try {
+  const look = localStorage.getItem('beatpaper-look');
+  if (['blocks', 'color', 'staff'].includes(look)) {
+    rOpt.look = look;
+    document.querySelectorAll('[data-look]').forEach((b) =>
+      b.setAttribute('aria-pressed', b.dataset.look === look ? 'true' : 'false'));
+  }
+} catch (e) {}
 route();
