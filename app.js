@@ -17,11 +17,12 @@ function tempoTerm(bpm) {
 }
 
 const BOOKS = [
-  { grade: 6, url: 'https://hanhtrangso.nxbgd.vn/ebook/read/am-nhac-6-10772' },
-  { grade: 7, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-7.4700049640#page=0' },
-  { grade: 8, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-8.4700139323' },
-  { grade: 9, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-9.4700486486' },
+  { grade: 6, url: 'https://hanhtrangso.nxbgd.vn/ebook/read/am-nhac-6-10772', pageSuffix: (p) => `?page=${p}` },
+  { grade: 7, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-7.4700049640', pageSuffix: (p) => `#page=${p + 1}` },
+  { grade: 8, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-8.4700139323', pageSuffix: (p) => `#page=${p}` },
+  { grade: 9, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-9.4700486486', pageSuffix: (p) => `#page=${p}` },
 ];
+const bookPageUrl = (book, page) => book.url + book.pageSuffix(page);
 
 const READINGS = [
   { grade: 7, no: 1, name: '', origin: 'Nhạc Đức', tempo: 'Vừa phải – Nhịp nhàng', bpm: 92, meter: '4/4', key: 'Đô trưởng',
@@ -1456,7 +1457,7 @@ function selectReading(r) {
   $('rTitle').textContent = readingTitle(r) + (r.name ? ` · ${r.name}` : '');
   const book = bookOf(r.grade);
   $('rMeta').innerHTML = [originText(r), r.key, `Nhịp ${r.meter}`, r.remark].filter(Boolean).join(' · ') +
-    ` · <a href="${book.url}" target="_blank" rel="noopener">SGK Âm nhạc ${r.grade}, tr. ${r.page} ↗</a>`;
+    ` · <a href="${bookPageUrl(book, r.page)}" target="_blank" rel="noopener" title="Mở đúng trang ${r.page} trong sách điện tử">SGK Âm nhạc ${r.grade}, tr. ${r.page} ↗</a>`;
   setRBpm(r.bpm);
   refreshScore();
   rStatusIdle();
