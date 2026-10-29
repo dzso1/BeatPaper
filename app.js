@@ -1197,7 +1197,8 @@ function renderScore() {
         if (it.oct <= 3) n.dataset.oct = 'lo';
         n.style.top = `${yOf(it.step)}px`;
         n.innerHTML = `<span>${name}</span>`;
-        n.title = name + (it.oct >= 5 ? ' (quãng tám cao)' : it.oct <= 3 ? ' (quãng tám thấp)' : '');
+        n.title = name + (it.oct >= 5 ? ' (quãng tám cao)' : it.oct <= 3 ? ' (quãng tám thấp)' : '') + ' · bấm để nghe';
+        n.addEventListener('click', () => playNote(it));
       }
       // nốt được nối từ ô nhịp trước sang
       const before = x === 0 ? lastItemOf(bars[bi - 1]) : prev;
@@ -1320,6 +1321,29 @@ function refreshScore() {
   if (blocks) { $('staffMsg').hidden = true; renderScore(); }
   else renderStaff();
   buildTimeline();
+}
+
+/* ----- Bấm vào một nốt: nghe đúng cao độ, dài theo trường độ ở nhịp độ đang chọn ----- */
+let tapTimer = 0;
+function playNote(it) {
+  if (it.rest || !ensureAudio()) return;
+  // nốt có dấu nối thì nghe hết cả phần ngân tiếp
+  const items = rd.bars.flatMap((b) => b.items);
+  let k = items.indexOf(it);
+  let dur = it.dur;
+  let cur = it;
+  while (cur.tie && items[k + 1] && !items[k + 1].rest && items[k + 1].midi === cur.midi) {
+    cur = items[++k];
+    dur += cur.dur;
+  }
+  const sec = Math.min(Math.max(dur * spe(), 0.3), 2.5);
+  tone(it.midi, ctx.currentTime + 0.01, sec, 1, master);
+  // Lúc đang dừng thì đánh dấu nốt vừa bấm; lúc đang phát, khung vẫn theo bài
+  if (!rd.playing) {
+    setCurrent(it);
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { if (!rd.playing && rd.cur === it) setCurrent(null); }, sec * 1000 + 120);
+  }
 }
 
 /* ----- Nốt đang vang: khối màu sáng viền, hoặc khung quanh nốt trên khuông ----- */
@@ -1445,6 +1469,7 @@ async function renderStaff() {
     wrap: { minSpacing: 1.6, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
     paddingtop: 4, paddingbottom: 4, paddingleft: 2, paddingright: 2,
     format: { vocalfont: 'Be Vietnam Pro 13', annotationfont: 'Be Vietnam Pro 12' },
+    selectTypes: false,   // tắt kiểu "chọn nốt tô đỏ" của abcjs; bấm nốt thì nghe nốt đó (xem dưới)
   })[0];
   // Ghép từng nốt trên khuông với nốt trong dữ liệu (cùng thứ tự)
   const notes = [];
@@ -1457,6 +1482,12 @@ async function renderStaff() {
     // "Khuông có màu": chỉ tô đầu nốt, tên nốt bên dưới vẫn màu mực cho dễ đọc
     if (rOpt.look === 'color' && !it.rest) {
       it.staffEls.forEach((e) => e.querySelectorAll('.abcjs-notehead').forEach((h) => h.classList.add(`abc-c-${it.letter}`)));
+    }
+    if (!it.rest) {
+      it.staffEls.forEach((e) => {
+        e.classList.add('note-hit');
+        e.addEventListener('click', () => playNote(it));
+      });
     }
   });
   box.setAttribute('role', 'img');

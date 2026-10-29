@@ -359,6 +359,8 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .rstaff .abc-c-E { fill: var(--n-E); stroke: var(--n-E-edge); stroke-width: .8px; }
 .rstaff .abc-c-F { fill: var(--n-F); } .rstaff .abc-c-G { fill: var(--n-G); }
 .rstaff .abc-c-A { fill: var(--n-A); } .rstaff .abc-c-B { fill: var(--n-B); }
+.rstaff .note-hit { cursor: pointer; }
+.nt:not(.rest) { cursor: pointer; }
 .staff-msg { margin: 0; padding: 24px 0; font-size: 16px; color: var(--ink-2); }
 .staff-msg .link { border: none; background: none; padding: 0; font-size: inherit; text-decoration: underline; }
 .staff-cursor {
