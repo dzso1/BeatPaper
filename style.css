@@ -608,7 +608,8 @@ body.present .count-big { font-size: clamp(96px, 30vh, 320px); }
   .lane-head { padding-right: 4px; }
 }
 
-body.present:not(.dict) .board-tools { display: none; }
+body.present:not(.dict-mode) .board-tools { display: none; }
+body.dict-mode .cam { display: none; }
 body.present .mixer-panel { display: none; }
 body.present .lane-btn, body.present .lane-head > .lane-name { font-size: clamp(15px, 2.4vh, 22px); }
 body.present .lane-shape { width: clamp(18px, 2.6vh, 26px); height: clamp(18px, 2.6vh, 26px); }
@@ -680,7 +681,7 @@ body.present .lane-shape { width: clamp(18px, 2.6vh, 26px); height: clamp(18px, 
   .dict-acts { width: 100%; }
   .dict-acts .btn { flex: 1 1 auto; }
   .dict-score { margin-left: 0; }
-  .kits { display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; }
+  .kits { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; }
   .kits button { min-width: 0; padding: 0 4px; font-size: 13px; }
   .knob { width: 52px; height: 52px; }
 }

@@ -270,10 +270,10 @@ function tamGiac(t, v, out, p) {
 }
 
 const KITS = {
-  phong: { name: 'Phòng thu', lanes: { R: ['Trống cái', kickAco], B: ['Chũm chọe', hatAco], Y: ['Trống lẫy', snare] } },
-  so: { name: 'Điện tử', lanes: { R: ['Trống 808', kick808], B: ['Hi-hat 808', hat808], Y: ['Vỗ tay', clap808] } },
-  dan: { name: 'Dân tộc', lanes: { R: ['Trống cái', trongCai], B: ['Mõ', mo], Y: ['Phách tre', phach] } },
-  lop: { name: 'Lớp học', lanes: { R: ['Trống tay', trongTay], B: ['Lục lạc', lucLac], Y: ['Tam giác', tamGiac] } },
+  phong: { name: 'Dàn trống', lanes: { R: ['Trống cái', kickAco], B: ['Hi-hat', hatAco], Y: ['Trống lẫy', snare] } },
+  so: { name: 'Trống điện tử', lanes: { R: ['Trống cái', kick808], B: ['Hi-hat', hat808], Y: ['Vỗ tay', clap808] } },
+  dan: { name: 'Nhạc cụ dân tộc', lanes: { R: ['Trống cái', trongCai], B: ['Mõ', mo], Y: ['Thanh phách', phach] } },
+  lop: { name: 'Bộ gõ học đường', lanes: { R: ['Trống con', trongTay], B: ['Tambourine', lucLac], Y: ['Triangle', tamGiac] } },
 };
 const KIT_ORDER = ['phong', 'so', 'dan', 'lop'];
 
@@ -459,12 +459,12 @@ const METERS = {
   ] },
   '3/4': { unit: 'nốt đen', accent: [], presets: [
     { name: 'Mạnh – nhẹ – nhẹ', bpm: 104, R: 'x.. x.. x.. x..', B: '.xx .xx .xx .xx' },
-    { name: 'Điệu valse', bpm: 132, R: 'x.. x.. x.. x..', Y: '.xx .xx .xx .x.' },
+    { name: 'Valse', bpm: 132, R: 'x.. x.. x.. x..', Y: '.xx .xx .xx .x.' },
     { name: 'Hỏi – đáp', bpm: 100, R: 'x.. x.. ... ...', B: '... ... xxx x..' },
   ] },
   '4/4': { unit: 'nốt đen', accent: [2], presets: [
     { name: 'Mạnh – nhẹ', bpm: 96, R: 'x... x... x... x...', B: '.x.x .x.x .x.x .x.x', Y: '..x. ..x. ..x. ..x.' },
-    { name: 'Nhịp rock', bpm: 110, R: 'x.x. x.x. x.x. x.xx', B: 'xxxx xxxx xxxx xxxx', Y: '.x.x .x.x .x.x .x.x' },
+    { name: 'Rock', bpm: 110, R: 'x.x. x.x. x.x. x.xx', B: 'xxxx xxxx xxxx xxxx', Y: '.x.x .x.x .x.x .x.x' },
     { name: 'Trống đội', bpm: 120, R: 'x... xx.. x... xx..', B: '.x.x .... .x.x ....', Y: '..x. ..x. ..x. ..xx' },
     { name: 'Hỏi – đáp', bpm: 108, Y: 'xxx. .... xxx. ....', B: '.... xxx. .... ....', R: '.... .... .... xxx.' },
   ] },
@@ -527,7 +527,7 @@ let gridBpr = 0;
 let lastStep = -1;
 let focus = { lane: 'R', i: 0 };
 
-const cellPlace = (i) => `ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}, đếm ${(i % BEATS_PER_BAR) + 1}`;
+const cellPlace = (i) => `ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}, phách ${(i % BEATS_PER_BAR) + 1}`;
 
 function laneHead(lane, interactive) {
   const name = INSTRUMENTS[lane].name;
@@ -535,11 +535,11 @@ function laneHead(lane, interactive) {
     <span class="lane-name">${name}</span>`;
   if (!interactive) return `<div class="lane-head" data-lane="${lane}" aria-hidden="true">${inner}</div>`;
   return `<div class="lane-head" data-lane="${lane}">
-    <button class="lane-btn" data-lane="${lane}" aria-pressed="${state.muted[lane]}" title="Tắt / bật bè ${name} (phím ${LANES.indexOf(lane) + 1})">
+    <button class="lane-btn" data-lane="${lane}" aria-pressed="${state.muted[lane]}" title="Tắt/bật ${name} (phím ${LANES.indexOf(lane) + 1})">
       ${inner}
       <svg class="ico lane-on" aria-hidden="true"><use href="#i-sound"/></svg>
       <svg class="ico lane-off" aria-hidden="true"><use href="#i-mute"/></svg>
-      <span class="sr-only">Tắt bè ${name}</span>
+      <span class="sr-only">Tắt tiếng ${name}</span>
     </button>
   </div>`;
 }
@@ -623,7 +623,7 @@ function renderCells() {
 function toggleMute(lane) {
   state.muted[lane] = !state.muted[lane];
   renderCells();
-  announce(`${state.muted[lane] ? 'Đã tắt' : 'Đã bật'} bè ${INSTRUMENTS[lane].name}`);
+  announce(`${state.muted[lane] ? 'Đã tắt' : 'Đã bật'} tiếng ${INSTRUMENTS[lane].name}`);
 }
 
 function buildPresets() {
@@ -667,8 +667,8 @@ function applyMeter(m) {
   buildPresets();
   document.querySelectorAll('[data-meter]').forEach((b) =>
     b.setAttribute('aria-pressed', b.dataset.meter === m ? 'true' : 'false'));
-  $('meterInfo').textContent = `${BARS} ô nhịp ${m} · mỗi ô là 1 ${METERS[m].unit}`;
-  $('camMsg').textContent = `Vẽ ${STEPS} chấm đỏ, xanh, vàng lên dải giấy trắng, rồi bật camera hoặc tải ảnh lên. Có thể kéo thả ảnh vào khung này.`;
+  $('meterInfo').textContent = `Nhịp ${m} · ${BARS} ô nhịp · mỗi phách là một ${METERS[m].unit}`;
+  $('camMsg').textContent = `Tô ${STEPS} ô trên dải giấy bằng màu đỏ, xanh hoặc vàng; ô để trắng là dấu lặng. Bật camera hoặc tải ảnh lên (có thể kéo thả ảnh vào khung).`;
   detected = [];
   camHist.length = 0;
   buildDetChips();
@@ -682,7 +682,7 @@ function setMeter(m) {
   if (dict.on) {
     applyMeter(m);
     newChallenge();
-    announce(`Nhịp ${m}, bài nghe mới`);
+    announce(`Nhịp ${m}, đã tạo bài mới`);
     return;
   }
   pushUndo();
@@ -693,7 +693,7 @@ function setMeter(m) {
   renderCells();
   markPreset();
   showToast(`Đã đổi sang nhịp ${m}`, 'Hoàn tác', undo);
-  announce(`Nhịp ${m}, ${STEPS} ô mỗi bè`);
+  announce(`Nhịp ${m}`);
 }
 
 const SIG_W = 32;
@@ -762,7 +762,7 @@ function loadPreset(n) {
   setBpm(p.bpm);
   renderCells();
   markPreset();
-  showToast(`Đã nạp mẫu ${p.name}`, 'Hoàn tác', undo);
+  showToast(`Đã chọn tiết tấu mẫu “${p.name}”`, 'Hoàn tác', undo);
 }
 
 function clearAll() {
@@ -773,7 +773,7 @@ function clearAll() {
   dict.checked = false;
   renderCells();
   markPreset();
-  showToast(dict.on ? 'Đã xoá bài chép' : `Đã xoá hết ${LANES.length} bè`, 'Hoàn tác', undo);
+  showToast(dict.on ? 'Đã xoá bài ghi' : 'Đã xoá toàn bộ lưới', 'Hoàn tác', undo);
 }
 
 let stroke = null;
@@ -943,12 +943,12 @@ function setBpm(v) {
   state.bpm = v;
   $('bpm').value = v;
   const eighths = METER.endsWith('/8');
-  $('bpmOut').innerHTML = `<b>${v}</b> <small>${eighths ? 'móc đơn' : 'phách'}/phút</small>`;
-  $('tempoTerm').textContent = eighths ? 'Đếm theo nốt móc đơn' : tempoTerm(v);
+  $('bpmOut').innerHTML = `<b>${v}</b> <small>phách/phút</small>`;
+  $('tempoTerm').textContent = eighths ? 'Phách là nốt móc đơn' : tempoTerm(v);
 }
 
 function setStepStatus(i) {
-  $('stepStatus').textContent = `${play.target ? 'Mẫu · ' : ''}Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1} / ${BARS} · đếm ${(i % BEATS_PER_BAR) + 1}`;
+  $('stepStatus').textContent = `${play.target ? 'Mẫu · ' : ''}Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}/${BARS} · phách ${(i % BEATS_PER_BAR) + 1}`;
 }
 
 let playheadX = -1;
@@ -1005,16 +1005,16 @@ $('undoBtn').addEventListener('click', undo);
 window.addEventListener('resize', () => { if (state.playing && lastStep >= 0) placePlayhead(lastStep); });
 
 const LEVELS = [
-  { name: 'Dễ', lanes: 1, bars: 1, bpm: 84 },
-  { name: 'Vừa', lanes: 2, bars: 2, bpm: 96 },
-  { name: 'Khó', lanes: 3, bars: 4, bpm: 104 },
+  { name: 'Cơ bản', lanes: 1, bars: 1, bpm: 84 },
+  { name: 'Trung bình', lanes: 2, bars: 2, bpm: 96 },
+  { name: 'Nâng cao', lanes: 3, bars: 4, bpm: 104 },
 ];
 const LANE_FEEL = {
   R: { strong: 0.9, mid: 0.5, weak: 0.15 },
   B: { strong: 0.35, mid: 0.45, weak: 0.6 },
   Y: { strong: 0.2, mid: 0.65, weak: 0.35 },
 };
-const MARK_TEXT = { ok: ', đúng', bad: ', tô thừa', miss: ', còn thiếu' };
+const MARK_TEXT = { ok: ', đúng', bad: ', ghi thừa', miss: ', còn thiếu' };
 
 const dict = { on: false, level: 0, target: null, lanes: [], checks: 0, checked: false, revealed: false, solved: false, saved: null };
 const dictScore = { solved: 0, stars: 0 };
@@ -1061,8 +1061,7 @@ function makeTarget() {
 }
 
 function dictIntro() {
-  const n = dict.lanes.length;
-  return `Bấm Nghe mẫu, đếm theo tiếng gõ phách rồi tô lại vào lưới những tiếng em nghe được. Bài này có ${n === 1 ? 'bè' : `${n} bè`} ${listNames(dict.lanes)}.`;
+  return `Nghe tiết tấu mẫu rồi ghi lại vào lưới. Nhạc cụ: ${listNames(dict.lanes)}.`;
 }
 
 function setDictMsg(text, tone = '') {
@@ -1081,7 +1080,7 @@ function updateDictUI() {
   $('answerBtn').disabled = over;
   $('listenBtn').classList.toggle('btn--primary', !over);
   $('newBtn').classList.toggle('btn--primary', over);
-  $('dictScore').innerHTML = `<b>${dictScore.solved}</b> bài đúng · <b>${dictScore.stars}</b> ★`;
+  $('dictScore').innerHTML = `Hoàn thành <b>${dictScore.solved}</b> bài · <b>${dictScore.stars}</b> điểm`;
   document.querySelectorAll('[data-level]').forEach((b) =>
     b.setAttribute('aria-pressed', +b.dataset.level === dict.level ? 'true' : 'false'));
 }
@@ -1147,7 +1146,7 @@ function celebrate() {
 
 function checkDict() {
   if (!dict.on || dict.revealed || dict.solved) return;
-  if (!hasAnyNote()) { setDictMsg('Lưới còn trống. Nghe mẫu rồi tô các tiếng em nghe được nhé.', 'warn'); return; }
+  if (!hasAnyNote()) { setDictMsg('Lưới chưa có nốt nào.', 'warn'); return; }
   if (state.playing) stop(true);
   const r = dictResult();
   dict.checks++;
@@ -1159,15 +1158,15 @@ function checkDict() {
     dictScore.solved++;
     dictScore.stars += stars;
     saveDictScore();
-    msg = `Chính xác! Em chép đúng cả ${r.right} tiếng, được ${stars} ★.`;
+    msg = `Chính xác: đúng ${r.right}/${r.right} nốt, được ${stars} điểm.`;
     setDictMsg(msg, 'good');
     renderCells();
     celebrate();
   } else {
-    const parts = [`Đúng ${r.right}/${r.right + r.miss} tiếng`];
-    if (r.wrong) parts.push(`${r.wrong} ô tô thừa`);
-    if (r.miss) parts.push(`còn thiếu ${r.miss} tiếng`);
-    msg = `${parts.join(' · ')}. ${r.wrong ? 'Ô có dấu ✕ là chỗ tô thừa. ' : ''}Nghe lại mẫu rồi sửa nhé.`;
+    const parts = [`Đúng ${r.right}/${r.right + r.miss} nốt`];
+    if (r.wrong) parts.push(`thừa ${r.wrong}`);
+    if (r.miss) parts.push(`thiếu ${r.miss}`);
+    msg = `${parts.join(' · ')}.${r.wrong ? ' Ô đánh dấu ✕ là nốt ghi thừa.' : ''}`;
     setDictMsg(msg, 'warn');
     renderCells();
   }
@@ -1180,7 +1179,7 @@ function revealDict() {
   dict.revealed = true;
   dict.checked = true;
   renderCells();
-  setDictMsg('Ô viền nét đứt là tiếng em còn thiếu, ô có dấu ✕ là tô thừa. Nghe lại mẫu để so, rồi bấm Bài mới.');
+  setDictMsg('Đáp án: ô viền nét đứt là nốt còn thiếu, ô đánh dấu ✕ là nốt ghi thừa.');
   replay($('dictMsg'), 'fade-in');
   announce('Đã hiện đáp án');
 }
@@ -1196,9 +1195,12 @@ function setSeqMode(on) {
     b.setAttribute('aria-pressed', (b.dataset.seq === 'dict') === on ? 'true' : 'false'));
   if (on === dict.on) return;
   if (state.playing) stop(true);
-  if (on) dict.saved = snapshot();
+  if (on) {
+    dict.saved = snapshot();
+    stopCamera();
+  }
   dict.on = on;
-  document.body.classList.toggle('dict', on);
+  document.body.classList.toggle('dict-mode', on);
   $('presetsWrap').hidden = on;
   $('dict').hidden = !on;
   $('dictMsg').hidden = !on;
@@ -1230,12 +1232,12 @@ $('levels').addEventListener('click', (e) => {
   if (!b || +b.dataset.level === dict.level) return;
   dict.level = +b.dataset.level;
   newChallenge();
-  announce(`Mức ${LEVELS[dict.level].name}, bài nghe mới`);
+  announce(`Mức ${LEVELS[dict.level].name}, đã tạo bài mới`);
 });
 $('listenBtn').addEventListener('click', listenTarget);
 $('checkBtn').addEventListener('click', checkDict);
 $('answerBtn').addEventListener('click', revealDict);
-$('newBtn').addEventListener('click', () => { newChallenge(); announce('Bài nghe mới'); });
+$('newBtn').addEventListener('click', () => { newChallenge(); announce('Đã tạo bài mới'); });
 
 const KNOB_SPEC = {
   vol: { label: 'Âm lượng', min: 0, max: 150, step: 5, def: 100, fmt: (v) => `${v}%` },
@@ -1346,7 +1348,8 @@ function setKit(k) {
   layoutGrid();
   if (dict.on && !dict.checked && !dict.revealed && !dict.solved) setDictMsg(dictIntro());
   demoKit();
-  announce(`Bộ trống ${KITS[k].name}: ${LANES.map((lane) => INSTRUMENTS[lane].name).join(', ')}`);
+  buildStripDownload();
+  announce(`${KITS[k].name}: ${LANES.map((lane) => INSTRUMENTS[lane].name).join(', ')}`);
 }
 
 const mixerEl = $('mixer');
@@ -1505,7 +1508,7 @@ function setStripReady(ready, dots) {
   $('camWrite').disabled = !ready;
   $('camWrite').classList.toggle('primary', ready);
   $('camHint').textContent = ready
-    ? `Thấy ${dots} phách có màu. Bấm “Ghi vào bảng nhịp” để chép vào lưới.`
+    ? `Nhận được ${dots} ô có màu. Bấm “Chép vào lưới” để ghi.`
     : 'Đưa dải giấy vào khung và giữ yên…';
 }
 
@@ -1523,8 +1526,8 @@ function writeFromCamera() {
   markPreset();
   changed.forEach((c, i) => c && LANES.forEach((lane) => replay(cellEls[lane][i], 'cam-flash')));
   const n = strip.filter((v) => v !== 'W').length;
-  showToast(`Đã ghi ${n} phách từ dải giấy`, 'Hoàn tác', undo);
-  announce(`Đã ghi ${n} phách từ dải giấy`);
+  showToast(`Đã chép ${n} nốt từ dải giấy`, 'Hoàn tác', undo);
+  announce(`Đã chép ${n} nốt từ dải giấy`);
 }
 
 function drawOverlay(zs) {
@@ -1639,8 +1642,8 @@ function scanPhoto() {
   setStripReady(dots >= MIN_DOTS, dots);
   if (dots < MIN_DOTS) {
     $('camHint').textContent = dots
-      ? `Mới thấy ${dots} chấm màu. Kéo thanh “Dời khung quét” cho khung trùng dải giấy.`
-      : 'Chưa thấy chấm màu nào. Kéo thanh “Dời khung quét” cho khung trùng dải giấy.';
+      ? `Mới nhận được ${dots} ô có màu. Dời khung quét cho trùng với dải giấy.`
+      : 'Chưa nhận được ô màu nào. Dời khung quét cho trùng với dải giấy.';
   }
   drawOverlay(zs);
   updateDetChips();
@@ -1697,7 +1700,7 @@ async function loadPhoto(file) {
   $('camStatus').textContent = 'Đang xem ảnh';
   $('photoClear').hidden = false;
   scanPhoto();
-  announce(stripReady ? `Đã đọc ảnh, thấy ${lastDots} chấm màu` : 'Đã mở ảnh, chưa thấy đủ chấm màu');
+  announce(stripReady ? `Đã đọc ảnh, nhận được ${lastDots} ô có màu` : 'Đã mở ảnh, chưa nhận đủ ô màu');
 }
 
 $('photoBtn').addEventListener('click', () => $('photoInput').click());
@@ -1729,7 +1732,7 @@ function buildStripDownload() {
     x += cell + (k === BEATS_PER_BAR - 1 ? groupGap : gap);
   }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="44mm" viewBox="0 0 ${w} 44" font-family="Arial, sans-serif">
-<text x="${x0}" y="9" font-size="4" fill="#333">BeatPaper · dải ${STEPS} ô (${BARS} ô nhịp ${METER}) · tô chấm đỏ = trống cái, xanh = chũm chọe, vàng = vỗ tay, để trắng = lặng</text>
+<text x="${x0}" y="9" font-size="4" fill="#333">BeatPaper · ${STEPS} ô, ${BARS} ô nhịp ${METER} · đỏ: ${INSTRUMENTS.R.name}, xanh: ${INSTRUMENTS.B.name}, vàng: ${INSTRUMENTS.Y.name}, để trắng: dấu lặng</text>
 ${rects}${nums}</svg>`;
   const a = $('stripDl');
   if (a.href.startsWith('blob:')) URL.revokeObjectURL(a.href);
@@ -2354,13 +2357,13 @@ function buildBooks() {
 }
 
 const VIEWS = ['nhip', 'doc', 'sgk'];
-const VIEW_TITLES = { nhip: 'Lập trình nhịp', doc: 'Bài đọc nhạc', sgk: 'Sách giáo khoa' };
+const VIEW_TITLES = { nhip: 'Soạn tiết tấu', doc: 'Bài đọc nhạc', sgk: 'Sách giáo khoa' };
 
 function setTitle() {
   const r = rd.reading;
   document.title = (view === 'doc' && r
     ? `${readingTitle(r)} – Lớp ${r.grade}`
-    : view === 'nhip' && dict.on ? 'Nghe – chép nhịp' : VIEW_TITLES[view]) + ' · BeatPaper';
+    : view === 'nhip' && dict.on ? 'Nghe – ghi tiết tấu' : VIEW_TITLES[view]) + ' · BeatPaper';
 }
 
 function setPlayUI() {

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F5F3EE">
-<title>Lập trình nhịp · BeatPaper</title>
+<title>Soạn tiết tấu · BeatPaper</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
 </svg>
 
 <header class="appbar">
-  <a class="brand" href="#nhip" aria-label="BeatPaper, về Lập trình nhịp">
+  <a class="brand" href="#nhip" aria-label="BeatPaper, về Soạn tiết tấu">
     <svg class="logo" viewBox="0 0 92 16" aria-hidden="true">
       <circle class="lg-r" cx="7" cy="8" r="5"/><rect class="lg-b" x="14" y="3.5" width="9" height="9" rx="1" transform="rotate(45 18.5 8)"/><path class="lg-y" d="M32 2.5 37.5 13h-11z"/><rect class="lg-w" x="40.5" y="3.5" width="9" height="9" rx="1.5"/>
       <circle class="lg-r" cx="61" cy="8" r="5"/><rect class="lg-b" x="68" y="3.5" width="9" height="9" rx="1" transform="rotate(45 72.5 8)"/><path class="lg-y" d="M86 2.5 91.5 13h-11z"/>
@@ -46,7 +46,7 @@
 
   <nav class="nav" role="tablist" aria-label="Phần học">
     <button class="tab" role="tab" id="tab-nhip" aria-controls="view-nhip" data-view="nhip" aria-selected="true">
-      <svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span>Lập trình nhịp</span>
+      <svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg><span>Soạn tiết tấu</span>
     </button>
     <button class="tab" role="tab" id="tab-doc" aria-controls="view-doc" data-view="doc" aria-selected="false" tabindex="-1">
       <svg class="ico" aria-hidden="true"><use href="#i-note"/></svg><span>Bài đọc nhạc</span>
@@ -63,8 +63,8 @@
         <p class="popover-title">Phím tắt</p>
         <dl>
           <dt><kbd>Space</kbd></dt><dd>Phát / dừng</dd>
-          <dt><kbd>1</kbd>–<kbd>3</kbd></dt><dd>Tắt / bật từng bè</dd>
-          <dt><kbd>N</kbd></dt><dd>Nghe mẫu (Nghe – chép)</dd>
+          <dt><kbd>1</kbd>–<kbd>3</kbd></dt><dd>Tắt/bật từng nhạc cụ</dd>
+          <dt><kbd>N</kbd></dt><dd>Nghe mẫu (Nghe – ghi)</dd>
           <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Hoàn tác</dd>
           <dt><kbd>F</kbd></dt><dd>Trình chiếu</dd>
           <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Di chuyển giữa các ô</dd>
@@ -85,11 +85,11 @@
   <section class="view" id="view-nhip" role="tabpanel" aria-labelledby="tab-nhip">
     <header class="page-head">
       <div>
-        <h1>Lập trình nhịp</h1>
-        <p class="page-sub" id="meterInfo">4 ô nhịp 4/4</p>
+        <h1>Soạn tiết tấu</h1>
+        <p class="page-sub" id="meterInfo">Nhịp 4/4</p>
         <div class="seg modes" role="group" aria-label="Chế độ">
-          <button data-seq="free" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg>Tự soạn</button>
-          <button data-seq="dict" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-ear"/></svg>Nghe – chép</button>
+          <button data-seq="free" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg>Soạn</button>
+          <button data-seq="dict" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-ear"/></svg>Nghe – ghi</button>
         </div>
       </div>
       <div class="field field--inline">
@@ -124,16 +124,16 @@
     <div class="canvas board">
       <div class="board-tools">
         <div class="presets-wrap" id="presetsWrap">
-          <span class="label" id="presetsLabel">Mẫu nhịp</span>
+          <span class="label" id="presetsLabel">Tiết tấu mẫu</span>
           <div class="presets" id="presets" role="group" aria-labelledby="presetsLabel"></div>
         </div>
         <div class="dict" id="dict" hidden>
           <div class="field field--inline dict-level">
             <span class="label" id="levelLabel">Mức</span>
             <div class="seg levels" id="levels" role="group" aria-labelledby="levelLabel">
-              <button data-level="0" aria-pressed="true" title="Một bè, mẫu lặp lại mỗi ô nhịp">Dễ</button>
-              <button data-level="1" aria-pressed="false" title="Hai bè, mẫu lặp lại mỗi 2 ô nhịp">Vừa</button>
-              <button data-level="2" aria-pressed="false" title="Ba bè, 4 ô nhịp không lặp">Khó</button>
+              <button data-level="0" aria-pressed="true" title="1 nhạc cụ, tiết tấu lặp lại mỗi ô nhịp">Cơ bản</button>
+              <button data-level="1" aria-pressed="false" title="2 nhạc cụ, tiết tấu lặp lại mỗi 2 ô nhịp">Trung bình</button>
+              <button data-level="2" aria-pressed="false" title="3 nhạc cụ, 4 ô nhịp không lặp lại">Nâng cao</button>
             </div>
           </div>
           <div class="btn-row dict-acts">
@@ -154,12 +154,12 @@
         </div>
       </div>
       <div class="canvas-head">
-        <p class="hint" id="gridHint">Mỗi hàng là một bè. Chạm hoặc kéo qua các ô để thêm tiếng, chạm lại để bỏ. Bấm Phát để nghe.</p>
+        <p class="hint" id="gridHint">Mỗi hàng là một nhạc cụ, mỗi ô là một phách. Chạm vào ô để ghi nốt, chạm lần nữa để xoá; có thể kéo qua nhiều ô.</p>
         <p class="hint dict-msg" id="dictMsg" role="status" hidden></p>
-        <p class="status" id="stepStatus">Ô nhịp 1 / 4 · đếm 1</p>
+        <p class="status" id="stepStatus">Ô nhịp 1/4 · phách 1</p>
       </div>
       <div class="grid-wrap" id="gridWrap">
-        <div class="score" id="score" role="group" aria-label="Dải nhịp"></div>
+        <div class="score" id="score" role="group" aria-label="Lưới tiết tấu"></div>
         <div class="playhead" id="playhead" aria-hidden="true"></div>
       </div>
     </div>
@@ -167,12 +167,12 @@
     <section class="panel mixer-panel" aria-labelledby="mixTitle">
       <header class="panel-head">
         <div>
-          <h2 id="mixTitle">Âm thanh</h2>
-          <p class="panel-sub">Chọn bộ trống rồi vặn núm: kéo lên xuống, lăn chuột hoặc dùng phím mũi tên. Nhấp đúp để về mặc định.</p>
+          <h2 id="mixTitle">Âm sắc</h2>
+          <p class="panel-sub">Chọn bộ nhạc cụ gõ, điều chỉnh âm lượng, cao độ và độ vang. Nhấp đúp vào núm để trở về mặc định.</p>
         </div>
       </header>
       <div class="kit-row">
-        <div class="seg kits" id="kits" role="group" aria-label="Bộ trống"></div>
+        <div class="seg kits" id="kits" role="group" aria-label="Bộ nhạc cụ"></div>
         <p class="hint" id="kitDesc"></p>
       </div>
       <div class="mixer" id="mixer"></div>
@@ -182,7 +182,7 @@
       <header class="panel-head">
         <div>
           <h2 id="camTitle">Quét dải giấy</h2>
-          <p class="panel-sub">Tô chấm màu lên dải giấy, rồi đọc bằng camera hoặc ảnh chụp.</p>
+          <p class="panel-sub">Ghi tiết tấu bằng màu trên giấy, rồi đọc vào lưới bằng camera hoặc ảnh chụp.</p>
         </div>
         <p class="status" id="camStatus">Camera đang tắt</p>
       </header>
@@ -191,7 +191,7 @@
           <video id="video" playsinline muted></video>
           <canvas class="overlay" id="overlay"></canvas>
           <div class="cam-empty" id="camEmpty">
-            <p id="camMsg">Vẽ 16 chấm đỏ, xanh, vàng lên dải giấy trắng.</p>
+            <p id="camMsg"></p>
             <p class="cam-err" id="camErr" role="alert"></p>
           </div>
         </div>
@@ -216,19 +216,19 @@
           </div>
 
           <div class="field">
-            <span class="label">Đọc được</span>
+            <span class="label">Kết quả đọc</span>
             <div class="chips-det" id="detChips" aria-hidden="true"></div>
             <p class="hint" id="camHint">Bật camera hoặc tải ảnh lên để bắt đầu.</p>
           </div>
 
           <label class="field">
-            <span class="label">Dời khung quét lên / xuống</span>
+            <span class="label">Vị trí khung quét</span>
             <input type="range" id="stripY" min="15" max="85" value="50">
           </label>
 
           <div class="btn-row">
             <button class="btn" id="camWrite" disabled>
-              <svg class="ico" aria-hidden="true"><use href="#i-write"/></svg><span>Ghi vào bảng nhịp</span>
+              <svg class="ico" aria-hidden="true"><use href="#i-write"/></svg><span>Chép vào lưới</span>
             </button>
             <button class="btn btn--ghost" id="photoClear" hidden>
               <svg class="ico" aria-hidden="true"><use href="#i-x"/></svg><span>Bỏ ảnh</span>
@@ -288,7 +288,7 @@
           </div>
           <button class="toggle" data-opt="countIn" aria-pressed="true" title="Đếm 1 ô nhịp trước khi vào bài"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Đếm vào</button>
           <button class="toggle" data-opt="click" aria-pressed="true" title="Gõ đều theo từng phách"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Gõ phách</button>
-          <button class="toggle" data-opt="loop" aria-pressed="false" title="Hết bài thì đọc lại từ đầu"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Lặp lại</button>
+          <button class="toggle" data-opt="loop" aria-pressed="false" title="Phát lại từ đầu khi hết bài"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Lặp lại</button>
         </div>
 
         <div class="canvas">
