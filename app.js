@@ -521,10 +521,11 @@ function applyMeter(m) {
   $('meters').querySelectorAll('[data-meter]').forEach((b) =>
     b.setAttribute('aria-pressed', b.dataset.meter === m ? 'true' : 'false'));
   $('meterInfo').textContent = `${BARS} ô nhịp ${m} · mỗi ô là 1 ${METERS[m].unit}`;
-  $('camMsg').textContent = `Vẽ ${STEPS} chấm đỏ, xanh, vàng lên dải giấy trắng. Bật camera và giơ dải vào khung.`;
+  $('camMsg').textContent = `Vẽ ${STEPS} chấm đỏ, xanh, vàng lên dải giấy trắng. Bật camera và giơ dải vào khung, hoặc tải ảnh chụp dải giấy lên (kéo thả vào đây cũng được).`;
   detected = [];
   camHist.length = 0;
   buildDetChips();
+  if (photo) scanPhoto();
   buildStripDownload();
   setBpm(state.bpm);
   setStepStatus(0);
@@ -803,6 +804,8 @@ let camTimer = 0;
 const camHist = [];
 let detected = [];
 let stripReady = false;
+let workW = WORK_W, workH = WORK_H;
+let photo = null;
 
 function rgbToHsv(r, g, b) {
   r /= 255; g /= 255; b /= 255;
@@ -832,10 +835,10 @@ function classifyPixel(r, g, b) {
 
 // 16 ô khung xếp ngang trên ảnh, cao độ theo thanh "Dời khung quét"
 function zones() {
-  const marginX = WORK_W * 0.04;
-  const zw = (WORK_W - marginX * 2) / STEPS;
-  const size = Math.floor(Math.min(zw * 0.8, WORK_H * 0.2));
-  const cy = WORK_H * ($('stripY').value / 100);
+  const marginX = workW * 0.04;
+  const zw = (workW - marginX * 2) / STEPS;
+  const size = Math.floor(Math.min(zw * 0.8, workH * 0.2));
+  const cy = workH * ($('stripY').value / 100);
   return [...Array(STEPS).keys()].map((i) => ({
     x: Math.round(marginX + zw * i + (zw - size) / 2),
     y: Math.round(cy - size / 2),
@@ -849,7 +852,7 @@ function classifyZone(data, z) {
   let total = 0;
   for (let y = z.y; y < z.y + z.h; y += 2) {
     for (let x = z.x; x < z.x + z.w; x += 2) {
-      const p = (y * WORK_W + x) * 4;
+      const p = (y * workW + x) * 4;
       const c = classifyPixel(data[p], data[p + 1], data[p + 2]);
       if (c) votes[c]++;
       total++;
@@ -862,8 +865,8 @@ function classifyZone(data, z) {
 
 function scanFrame() {
   if (!camStream || video.readyState < 2) return;
-  wctx.drawImage(video, 0, 0, WORK_W, WORK_H);
-  const { data } = wctx.getImageData(0, 0, WORK_W, WORK_H);
+  wctx.drawImage(video, 0, 0, workW, workH);
+  const { data } = wctx.getImageData(0, 0, workW, workH);
   const zs = zones();
   let stableAll = true;
   zs.forEach((z, i) => {
@@ -910,21 +913,26 @@ function writeFromCamera() {
 }
 
 function drawOverlay(zs) {
-  overlay.width = WORK_W; overlay.height = WORK_H;
+  overlay.width = workW; overlay.height = workH;
   const css = getComputedStyle(document.documentElement);
   const col = {
     R: css.getPropertyValue('--red'), B: css.getPropertyValue('--blue'),
-    Y: css.getPropertyValue('--yellow'), W: 'rgba(255,255,255,.85)',
+    Y: css.getPropertyValue('--yellow'), W: photo ? 'rgba(20,20,20,.7)' : 'rgba(255,255,255,.85)',
   };
-  octx.clearRect(0, 0, WORK_W, WORK_H);
+  octx.clearRect(0, 0, workW, workH);
+  if (photo) octx.drawImage(photo, 0, 0, workW, workH);
   zs.forEach((z, i) => {
     const v = detected[i] || 'W';
     octx.lineWidth = v === 'W' ? 1.5 : 3;
     octx.strokeStyle = col[v];
     octx.setLineDash(v === 'W' ? [4, 3] : []);
     octx.strokeRect(z.x + .5, z.y + .5, z.w, z.h);
-    octx.fillStyle = 'rgba(255,255,255,.95)';
     octx.font = '600 11px system-ui';
+    octx.lineWidth = 3;
+    octx.strokeStyle = 'rgba(0,0,0,.7)';
+    octx.setLineDash([]);
+    octx.strokeText(String(i + 1), z.x + 1, z.y - 4);
+    octx.fillStyle = 'rgba(255,255,255,.95)';
     octx.fillText(String(i + 1), z.x + 1, z.y - 4);
   });
 }
@@ -971,6 +979,7 @@ const CAM_ERRORS = {
 
 async function toggleCamera() {
   if (camStream) { stopCamera(); return; }
+  clearPhoto();
   $('camErr').textContent = '';
   if (!navigator.mediaDevices?.getUserMedia) {
     $('camStatus').textContent = 'Không mở được camera';
@@ -986,7 +995,8 @@ async function toggleCamera() {
     });
     video.srcObject = camStream;
     await video.play();
-    work.width = WORK_W; work.height = WORK_H;
+    workW = WORK_W; workH = WORK_H;
+    work.width = workW; work.height = workH;
     $('camEmpty').hidden = true;
     $('camBtn').textContent = 'Tắt camera';
     $('camStatus').textContent = 'Đang quét';
@@ -1001,6 +1011,95 @@ async function toggleCamera() {
     $('camBtn').disabled = false;
   }
 }
+
+const MAX_PHOTO_RATIO = 2;
+let photoUrl = '';
+
+function scanPhoto() {
+  if (!photo) return;
+  wctx.drawImage(photo, 0, 0, workW, workH);
+  const { data } = wctx.getImageData(0, 0, workW, workH);
+  const zs = zones();
+  detected = zs.map((z) => classifyZone(data, z));
+  const dots = detected.filter((v) => v !== 'W').length;
+  setStripReady(dots >= MIN_DOTS, dots);
+  if (dots < MIN_DOTS) {
+    $('camHint').textContent = dots
+      ? `Mới thấy ${dots} chấm màu. Kéo thanh “Dời khung quét” cho khung trùng dải giấy.`
+      : 'Chưa thấy chấm màu nào. Kéo thanh “Dời khung quét” cho khung trùng dải giấy.';
+  }
+  drawOverlay(zs);
+  updateDetChips();
+}
+
+function clearPhoto() {
+  if (!photo) return;
+  URL.revokeObjectURL(photoUrl);
+  photo = null;
+  photoUrl = '';
+  workW = WORK_W; workH = WORK_H;
+  $('camBox').style.aspectRatio = '';
+  octx.clearRect(0, 0, overlay.width, overlay.height);
+  detected = [];
+  updateDetChips();
+  setStripReady(false, 0);
+  $('camHint').textContent = 'Bật camera để bắt đầu.';
+  $('camEmpty').hidden = false;
+  $('camStatus').textContent = 'Camera đang tắt';
+  $('photoClear').hidden = true;
+}
+
+async function loadPhoto(file) {
+  $('camErr').textContent = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    $('camErr').textContent = 'Tệp này không phải ảnh. Hãy chọn ảnh JPG hoặc PNG.';
+    $('camEmpty').hidden = false;
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.src = url;
+  try {
+    await img.decode();
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    $('camErr').textContent = 'Không mở được ảnh này. Thử một ảnh JPG hoặc PNG khác.';
+    $('camEmpty').hidden = false;
+    return;
+  }
+  stopCamera();
+  clearPhoto();
+  photo = img;
+  photoUrl = url;
+  workW = WORK_W;
+  workH = Math.round(WORK_W * Math.min(img.naturalHeight / img.naturalWidth, MAX_PHOTO_RATIO));
+  work.width = workW; work.height = workH;
+  $('camBox').style.aspectRatio = `${workW} / ${workH}`;
+  $('camEmpty').hidden = true;
+  $('camStatus').textContent = 'Đang xem ảnh';
+  $('photoClear').hidden = false;
+  scanPhoto();
+  announce(stripReady ? `Đã đọc ảnh, thấy ${lastDots} chấm màu` : 'Đã mở ảnh, chưa thấy đủ chấm màu');
+}
+
+$('photoBtn').addEventListener('click', () => $('photoInput').click());
+$('photoInput').addEventListener('change', (e) => {
+  loadPhoto(e.target.files[0]);
+  e.target.value = '';
+});
+$('photoClear').addEventListener('click', clearPhoto);
+$('stripY').addEventListener('input', scanPhoto);
+$('camBox').addEventListener('dragover', (e) => {
+  e.preventDefault();
+  $('camBox').classList.add('drop');
+});
+$('camBox').addEventListener('dragleave', () => $('camBox').classList.remove('drop'));
+$('camBox').addEventListener('drop', (e) => {
+  e.preventDefault();
+  $('camBox').classList.remove('drop');
+  loadPhoto(e.dataTransfer.files[0]);
+});
 
 // Mẫu dải giấy để in (khổ A4 ngang) theo nhịp đang chọn, tạo ngay trên máy
 function buildStripDownload() {

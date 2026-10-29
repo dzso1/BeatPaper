@@ -105,7 +105,7 @@
         <p class="status" id="camStatus">Camera đang tắt</p>
       </div>
       <div class="cam-layout">
-        <div class="cam-box">
+        <div class="cam-box" id="camBox">
           <video id="video" playsinline muted></video>
           <canvas class="overlay" id="overlay"></canvas>
           <div class="cam-empty" id="camEmpty">
@@ -116,7 +116,12 @@
         <div class="cam-side">
           <div class="cam-actions">
             <button class="btn primary" id="camBtn">Bật camera</button>
+            <button class="btn" id="photoBtn">Tải ảnh lên</button>
+            <input type="file" id="photoInput" accept="image/*" hidden>
+          </div>
+          <div class="cam-actions">
             <button class="btn" id="camWrite" disabled>Ghi vào bảng nhịp</button>
+            <button class="btn" id="photoClear" hidden>Bỏ ảnh</button>
           </div>
           <p class="label">Camera đang thấy</p>
           <div class="chips-det" id="detChips" aria-hidden="true"></div>

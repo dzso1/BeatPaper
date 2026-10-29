@@ -242,6 +242,7 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .cam-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (max-width: 860px) { .cam-layout { grid-template-columns: minmax(0, 1fr); } }
 .cam-box { position: relative; aspect-ratio: 4 / 3; border-radius: 4px; overflow: hidden; background: #111; }
+.cam-box.drop { outline: 3px dashed var(--ink); outline-offset: 3px; }
 .cam-box video, .cam-box canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
 .cam-empty {
   position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px;
