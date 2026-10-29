@@ -383,6 +383,10 @@ function buildGrid() {
   }
 }
 
+function updateHint() {
+  $('gridHint').classList.toggle('is-hidden', state.cells.some((v) => v !== 'W'));
+}
+
 function renderCells() {
   cellEls.forEach((el, i) => {
     const v = state.cells[i];
@@ -393,7 +397,7 @@ function renderCells() {
     el.setAttribute('aria-label', `${cellPlace(i)}: ${v === 'W' ? 'lặng' : INSTRUMENTS[v].name}`);
     if (!first) replay(el, 'pop');
   });
-  $('gridHint').classList.toggle('is-hidden', state.cells.some((v) => v !== 'W'));
+  if (!stroke) updateHint();
 }
 
 function buildPalette() {
@@ -449,12 +453,13 @@ function markPreset() {
 }
 
 function buildMeters() {
-  const box = $('meters');
-  box.innerHTML = METER_ORDER.map((m) =>
-    `<button data-meter="${m}" aria-pressed="${m === METER}">${m}</button>`).join('');
-  box.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-meter]');
-    if (b && b.dataset.meter !== METER) setMeter(b.dataset.meter);
+  document.querySelectorAll('.meters').forEach((box) => {
+    box.innerHTML = METER_ORDER.map((m) =>
+      `<button data-meter="${m}" aria-pressed="${m === METER}">${m}</button>`).join('');
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-meter]');
+      if (b && b.dataset.meter !== METER) setMeter(b.dataset.meter);
+    });
   });
 }
 
@@ -468,10 +473,10 @@ function applyMeter(m) {
   lastStep = -1;
   buildGrid();
   buildPresets();
-  $('meters').querySelectorAll('[data-meter]').forEach((b) =>
+  document.querySelectorAll('[data-meter]').forEach((b) =>
     b.setAttribute('aria-pressed', b.dataset.meter === m ? 'true' : 'false'));
   $('meterInfo').textContent = `${BARS} ô nhịp ${m} · mỗi ô là 1 ${METERS[m].unit}`;
-  $('camMsg').textContent = `Vẽ ${STEPS} chấm đỏ, xanh, vàng lên dải giấy trắng. Bật camera và giơ dải vào khung, hoặc tải ảnh chụp dải giấy lên (kéo thả vào đây cũng được).`;
+  $('camMsg').textContent = `Vẽ ${STEPS} chấm đỏ, xanh, vàng lên dải giấy trắng, rồi bật camera hoặc tải ảnh lên. Có thể kéo thả ảnh vào khung này.`;
   detected = [];
   camHist.length = 0;
   buildDetChips();
@@ -586,10 +591,12 @@ window.addEventListener('pointermove', (e) => {
   const c = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.cell');
   if (c) paintCell(+c.dataset.i, stroke);
 });
-['pointerup', 'pointercancel'].forEach((t) => window.addEventListener(t, () => { stroke = null; strokeSnap = null; }));
+['pointerup', 'pointercancel'].forEach((t) => window.addEventListener(t, () => {
+  if (stroke) { stroke = null; strokeSnap = null; updateHint(); }
+}));
 scoreEl.addEventListener('click', (e) => {
   const c = e.target.closest('.cell');
-  if (c && e.detail === 0) { beginStroke(+c.dataset.i); stroke = null; strokeSnap = null; }
+  if (c && e.detail === 0) { beginStroke(+c.dataset.i); stroke = null; strokeSnap = null; updateHint(); }
 });
 
 function setFocusCell(i, move = true) {
@@ -673,7 +680,7 @@ function setBpm(v) {
   state.bpm = v;
   $('bpm').value = v;
   const eighths = METER.endsWith('/8');
-  $('bpmOut').textContent = `${v} ${eighths ? 'móc đơn' : 'phách'}/phút`;
+  $('bpmOut').innerHTML = `<b>${v}</b> <small>${eighths ? 'móc đơn' : 'phách'}/phút</small>`;
   $('tempoTerm').textContent = eighths ? 'Đếm theo nốt móc đơn' : tempoTerm(v);
 }
 
@@ -895,9 +902,9 @@ function stopCamera() {
   camHist.length = 0;
   updateDetChips();
   setStripReady(false, 0);
-  $('camHint').textContent = 'Bật camera để bắt đầu.';
+  $('camHint').textContent = 'Bật camera hoặc tải ảnh lên để bắt đầu.';
   $('camEmpty').hidden = false;
-  $('camBtn').textContent = 'Bật camera';
+  $('camBtnLabel').textContent = 'Bật camera';
   $('camStatus').textContent = 'Camera đang tắt';
 }
 
@@ -930,7 +937,7 @@ async function toggleCamera() {
     workW = WORK_W; workH = WORK_H;
     work.width = workW; work.height = workH;
     $('camEmpty').hidden = true;
-    $('camBtn').textContent = 'Tắt camera';
+    $('camBtnLabel').textContent = 'Tắt camera';
     $('camStatus').textContent = 'Đang quét';
     setStripReady(false, 0);
     camTimer = setInterval(scanFrame, SCAN_MS);
@@ -975,7 +982,7 @@ function clearPhoto() {
   detected = [];
   updateDetChips();
   setStripReady(false, 0);
-  $('camHint').textContent = 'Bật camera để bắt đầu.';
+  $('camHint').textContent = 'Bật camera hoặc tải ảnh lên để bắt đầu.';
   $('camEmpty').hidden = false;
   $('camStatus').textContent = 'Camera đang tắt';
   $('photoClear').hidden = true;
@@ -1287,8 +1294,9 @@ function selectGrade(grade, no) {
       .map((i) => `<i style="background:var(--n-${i.letter})"></i>`).join('');
     return `<li><button class="ritem" data-no="${r.no}">
       <span class="no">Số ${r.no}</span>
+      <span class="dots" aria-hidden="true">${dots}</span>
       <span class="t">${r.name || topicName(r)}</span>
-      <span class="m">${r.meter} · tr. ${r.page}<span class="dots" aria-hidden="true">${dots}</span></span>
+      <span class="meta">Nhịp ${r.meter} · trang ${r.page}</span>
     </button></li>`;
   }).join('');
   const pick = list.find((r) => r.no === no) || list[0];
@@ -1474,7 +1482,7 @@ async function renderStaff() {
     staffwidth: Math.max(220, width / scale - 20),
     wrap: { minSpacing: 1.6, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
     paddingtop: 4, paddingbottom: 4, paddingleft: 2, paddingright: 2,
-    format: { vocalfont: 'Be Vietnam Pro 13', annotationfont: 'Be Vietnam Pro 12' },
+    format: { vocalfont: '"Plus Jakarta Sans" 13', annotationfont: '"Plus Jakarta Sans" 12' },
     selectTypes: false,
   })[0];
   const notes = [];
@@ -1525,7 +1533,7 @@ function rStatusIdle() {
 function setRBpm(v) {
   rd.bpm = v;
   $('rBpm').value = v;
-  $('rBpmOut').textContent = `${v} phách/phút`;
+  $('rBpmOut').innerHTML = `<b>${v}</b> <small>phách/phút</small>`;
   $('rTempoTerm').textContent = rd.mi.d === 8
     ? `1 phách = ${rd.mi.beatLen === 3 ? 'nốt đen chấm dôi' : 'nốt móc đơn'}`
     : `Sách ghi: ${rd.reading ? rd.reading.tempo : tempoTerm(v)}`;
@@ -1652,8 +1660,8 @@ function buildBooks() {
         <div class="cnt">${n ? `${n} bài đọc nhạc trong ứng dụng` : 'Chưa có bài đọc nhạc trong ứng dụng'}</div>
       </div>
       <div class="acts">
-        ${n ? `<a class="btn primary" href="#doc/${b.grade}">Luyện đọc nhạc</a>` : ''}
-        <a class="btn" href="${b.url}" target="_blank" rel="noopener">Mở sách điện tử ↗</a>
+        ${n ? `<a class="btn btn--secondary" href="#doc/${b.grade}"><svg class="ico" aria-hidden="true"><use href="#i-note"/></svg>Luyện đọc nhạc</a>` : ''}
+        <a class="btn btn--ghost" href="${b.url}" target="_blank" rel="noopener">Mở sách điện tử<svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a>
       </div>
     </li>`;
   }).join('');
@@ -1731,7 +1739,7 @@ window.addEventListener('popstate', () => route());
 function setPresent(on) {
   document.body.classList.toggle('present', on);
   $('presentBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
-  $('presentBtn').textContent = on ? 'Thoát trình chiếu' : 'Trình chiếu';
+  $('presentLabel').textContent = on ? 'Thoát trình chiếu' : 'Trình chiếu';
   if (on && document.documentElement.requestFullscreen && !document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(() => {});
   }
