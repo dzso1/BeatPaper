@@ -1,26 +1,20 @@
-/* =========================================================
-   BeatPaper: giấy kẻ ô, chấm bút dạ, vạch nhịp.
-   Khung giao diện chỉ dùng giấy và mực; màu dành cho âm nhạc.
-   ========================================================= */
 :root {
-  --bg: #FAF8F3;          /* giấy */
-  --surface: #FFFFFF;     /* tờ giấy đặt trên bàn */
+  --bg: #FAF8F3;
+  --surface: #FFFFFF;
   --tray: #F1EEE6;
-  --rule: #E2DED4;        /* đường kẻ mảnh, chỉ để trang trí */
-  --line: #7D838B;        /* viền ô in trên giấy, 3,8:1 trên trắng */
+  --rule: #E2DED4;
+  --line: #7D838B;
   --ink: #1A1A1A;
   --ink-2: #3F444A;
-  --ink-3: #646A72;       /* chỉ cho chú thích, 5,1:1 trên giấy */
+  --ink-3: #646A72;
   --on-ink: #FFFFFF;
-  --rest: #FFFFFF;        /* ô phách lặng */
+  --rest: #FFFFFF;
 
-  /* Nhạc cụ: chấm đặc, mỗi màu một hình */
   --red: #C8322B;
   --blue: #1F5BD1;
   --yellow: #F2B705;
-  --yellow-edge: #8A6500; /* vàng đứng một mình quá nhạt nên luôn có viền */
+  --yellow-edge: #8A6500;
 
-  /* 7 nốt nhạc (Đô → Si) */
   --n-C: #C9262E; --n-D: #F0802B; --n-E: #F2C40F; --n-F: #3FA45B;
   --n-G: #12A1AE; --n-A: #3E63DD; --n-B: #8E4EC6;
   --n-D-edge: #A04E0E; --n-E-edge: #8A6D00;
@@ -29,7 +23,6 @@
   --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
 }
-/* Giao diện tối: "bảng đen" để ôn ở nhà */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #15171A; --surface: #1E2125; --tray: #272B30; --rule: #30353B; --line: #6B717A;
@@ -63,7 +56,6 @@ button { cursor: pointer; }
 }
 .num, output, .status { font-variant-numeric: tabular-nums; }
 
-/* ---------- Thanh trên cùng ---------- */
 .bar {
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; gap: 24px;
@@ -104,7 +96,6 @@ button { cursor: pointer; }
 .keys dd { margin: 0; color: var(--ink-2); }
 @media (pointer: coarse) { .keys { display: none; } }
 
-/* ---------- Nút ---------- */
 .btn, .toggle, .chip {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 40px; padding: 0 14px; border-radius: 4px;
@@ -132,7 +123,6 @@ button { cursor: pointer; }
   .icon-btn { width: 44px; height: 44px; }
 }
 
-/* ---------- Bố cục ---------- */
 .page { max-width: 1200px; margin: 0 auto; padding: 16px 20px 64px; }
 .sheet {
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
@@ -158,11 +148,9 @@ button { cursor: pointer; }
 input[type="range"] { accent-color: var(--ink); height: 28px; }
 .tools { display: flex; gap: 8px; margin-left: auto; }
 
-/* ---------- Tab 1: dải 16 phách ---------- */
 .meter-row { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .meters button { min-width: 52px; font-variant-numeric: tabular-nums; }
 .grid-wrap { position: relative; margin-top: 16px; }
-/* --cell do JS đặt: chọn 4, 2 hay 1 ô nhịp mỗi hàng để ô đủ to mà chạm */
 .score { --cell: 52px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 20px 0; }
 
 .timesig {
@@ -188,13 +176,11 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .cell[data-v="Y"] { color: var(--yellow); }
 .cell:hover { border-color: var(--ink); }
 .cell.active { border: 2.5px solid var(--ink); }
-/* Phản hồi ngắn khi tô và khi phách vang (≤150ms) */
 .cell.pop svg, .cell.hit svg { animation: tap .14s ease-out; }
 @keyframes tap { from { transform: scale(.8); } }
 .cell.cam-flash { animation: camflash .15s ease-out 2; }
 @keyframes camflash { 50% { background: var(--tray); } }
 
-/* Con trỏ phách: vạch mực dày dưới ô đang vang */
 .playhead {
   position: absolute; top: 0; left: 0; height: 5px; border-radius: 3px;
   background: var(--ink); pointer-events: none; opacity: 0;
@@ -217,7 +203,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .inst kbd { margin-left: auto; font: 600 13px var(--font); color: var(--ink-3); }
 .inst[aria-checked="true"] { border: 2.5px solid var(--ink); background: var(--tray); padding: 7px 11px; }
 @media (pointer: coarse) { .inst kbd { display: none; } }
-/* Điện thoại: lưới xếp 4 hàng nên đưa khay nhạc cụ lên trên lưới, gọn thành một hàng */
 @media (max-width: 640px) {
   .paint { display: flex; flex-direction: column; }
   .paint > .head { order: 0; } .paint > .transport { order: 1; } .paint > .hint { order: 2; }
@@ -238,7 +223,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .presets-row { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
 .presets { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* ---------- Quét dải giấy ---------- */
 .cam-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (max-width: 860px) { .cam-layout { grid-template-columns: minmax(0, 1fr); } }
 .cam-box { position: relative; aspect-ratio: 4 / 3; border-radius: 4px; overflow: hidden; background: #111; }
@@ -262,7 +246,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .chips-det span[data-v="Y"] { background: var(--yellow); border-color: var(--yellow-edge); }
 .range-row { display: flex; flex-direction: column; gap: 4px; font-size: 15px; font-weight: 600; }
 
-/* ---------- Tab 2: bài đọc nhạc ---------- */
 .reader { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
 .picker { position: sticky; top: 72px; }
 .grades { display: grid; grid-template-columns: repeat(4, 1fr); border: 1.5px solid var(--line); border-radius: 4px; overflow: hidden; }
@@ -353,7 +336,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .nt[data-oct="lo"]::after { bottom: -8px; }
 .nt.now { outline: 3px solid var(--ink); outline-offset: 2px; z-index: 1; }
 
-/* Khuông nhạc (vẽ bởi abcjs). Màu theo mực của giao diện, đầu nốt tô màu ở chế độ "Khuông có màu" */
 .rstaff { color: var(--ink); min-height: 120px; }
 .rstaff svg { display: block; max-width: 100%; height: auto; }
 .rstaff .abc-c-C { fill: var(--n-C); } .rstaff .abc-c-D { fill: var(--n-D); }
@@ -369,7 +351,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
   border: 3px solid var(--ink); border-radius: 6px;
 }
 
-/* Số đếm vào lớn, giữa bản nhạc */
 .count-big {
   position: absolute; inset: 0; display: grid; place-items: start center; padding-top: 4px; pointer-events: none;
   font-size: clamp(72px, 16vh, 160px); font-weight: 700; line-height: 1; color: var(--ink);
@@ -380,7 +361,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 .count-big.beat span { animation: count .15s ease-out; }
 @keyframes count { from { transform: scale(1.15); } }
 
-/* ---------- Tab 3: sách giáo khoa ---------- */
 .books { list-style: none; margin: 16px 0 0; padding: 0; border-top: 1px solid var(--rule); }
 .book { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 8px 16px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
 .book .big { font-size: 40px; font-weight: 700; line-height: 1; }
@@ -392,7 +372,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
   .book .acts { grid-column: 1 / -1; justify-content: flex-start; }
 }
 
-/* ---------- Thông báo ngắn ---------- */
 .toast {
   position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 40;
   display: flex; align-items: center; gap: 16px; max-width: calc(100% - 32px);
@@ -405,7 +384,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
 }
 .toast-act:empty { display: none; }
 
-/* ---------- Màn hình hẹp ---------- */
 @media (max-width: 760px) {
   .bar { gap: 12px; padding: 0 12px; }
   .brand span { display: none; }
@@ -418,7 +396,6 @@ input[type="range"] { accent-color: var(--ink); height: 28px; }
   .reading .head h1 { font-size: 22px; }
 }
 
-/* ---------- Trình chiếu: cả lớp nhìn từ cuối phòng ---------- */
 body.present .bar-actions .keys,
 body.present .cam,
 body.present #gridHint,

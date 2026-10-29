@@ -1,9 +1,5 @@
-/* =========================================================
-   Dữ liệu chung
-   ========================================================= */
 const $ = (id) => document.getElementById(id);
 
-// Thuật ngữ chỉ nhịp độ (SGK Âm nhạc 7, tr.48), xếp theo BPM tối thiểu
 const TEMPO_TERMS = [
   [0,   'Lento',      'Rất chậm'],
   [66,  'Adagio',     'Chậm'],
@@ -27,10 +23,6 @@ const BOOKS = [
   { grade: 9, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-9.4700486486' },
 ];
 
-/* Bài đọc nhạc. Cách ghi nốt: Cao độ + quãng tám (C4 = Đô giữa), dấu ":" rồi trường độ
-   tính bằng số móc đơn (0.5 = móc kép, 1 = móc đơn, 2 = nốt đen, 3 = đen chấm dôi, 4 = trắng, 6 = trắng chấm dôi).
-   bpm tính theo phách của nhịp (3/8: móc đơn, 6/8: đen chấm dôi).
-   R = dấu lặng, "~" = dấu nối, "|" = vạch nhịp, "|:" ":|" = dấu nhắc lại, "[1" "[2" = khung thay đổi. */
 const READINGS = [
   { grade: 7, no: 1, name: '', origin: 'Nhạc Đức', tempo: 'Vừa phải – Nhịp nhàng', bpm: 92, meter: '4/4', key: 'Đô trưởng',
     topic: 'Chủ đề 1: Ngày khai trường', page: 9,
@@ -91,15 +83,10 @@ const READINGS = [
     notes: 'E4:1 | A4:1 B4:1 C5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:1 F5:0.5 E5:0.5 D5:1 C5:1 | B4:3 A4:1 | A4:3 E4:1 | A4:1 B4:1 C5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:1 F5:0.5 E5:0.5 D5:1 C5:1 | B4:3 A4:1 | A4:4 |' },
 ];
 
-/* =========================================================
-   Âm thanh dùng chung: tổng hợp bằng Web Audio API (không cần file mẫu)
-   ========================================================= */
-let ctx = null;        // AudioContext dùng chung cho cả hai tab
-let master = null;     // gain tổng -> compressor -> loa
-let noiseBuf = null;   // 1 giây tiếng ồn trắng, dùng lại cho hi-hat và clap
+let ctx = null;
+let master = null;
+let noiseBuf = null;
 
-// Khởi tạo AudioContext. Trình duyệt chỉ cho phát tiếng sau một thao tác của người dùng,
-// nên hàm này được gọi khi bấm Phát hoặc tô ô, không gọi lúc tải trang.
 function initAudio() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -118,7 +105,6 @@ function initAudio() {
   return ctx;
 }
 
-// Mỗi lần phát có một "bus" riêng; khi Dừng thì hạ bus về 0 để tắt ngay các nốt đã hẹn
 function openBus() {
   const b = ctx.createGain();
   b.connect(master);
@@ -138,14 +124,12 @@ function noise(t, dur, out) {
   src.stop(t + dur);
 }
 
-// Đường bao âm lượng: tăng rất nhanh rồi tắt dần theo hàm mũ
 function envelope(g, t, peak, decay) {
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
   g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
 }
 
-// Trống cái (Đỏ): sóng sin trượt từ 150 Hz xuống 45 Hz -> tiếng "bùm" trầm
 function kick(t, vel, out) {
   const o = ctx.createOscillator();
   const g = ctx.createGain();
@@ -157,7 +141,6 @@ function kick(t, vel, out) {
   o.start(t);
   o.stop(t + 0.5);
 
-  // tiếng "cách" rất ngắn ở đầu cho rõ nhát dùi
   const c = ctx.createOscillator();
   const cg = ctx.createGain();
   c.type = 'triangle';
@@ -169,7 +152,6 @@ function kick(t, vel, out) {
   c.stop(t + 0.05);
 }
 
-// Hi-hat (Xanh): tiếng ồn trắng qua lọc thông cao -> tiếng "xì" cao, rất ngắn
 function hihat(t, vel, out) {
   const hp = ctx.createBiquadFilter();
   hp.type = 'highpass';
@@ -184,7 +166,6 @@ function hihat(t, vel, out) {
   noise(t, 0.09, hp);
 }
 
-// Vỗ tay (Vàng): tiếng ồn qua lọc dải quanh 1.2 kHz, ba nhát dồn rất sát rồi một đuôi ngắn
 function clap(t, vel, out) {
   const bp = ctx.createBiquadFilter();
   bp.type = 'bandpass';
@@ -202,7 +183,6 @@ function clap(t, vel, out) {
   noise(t, 0.25, bp);
 }
 
-// Giai điệu: sóng tam giác pha thêm bồi âm quãng 8, tiếng tròn như sáo/kèn phím
 function tone(midi, t, dur, vel, out) {
   const f = 440 * Math.pow(2, (midi - 69) / 12);
   const end = t + Math.max(dur * 0.9, 0.06);
@@ -226,7 +206,6 @@ function tone(midi, t, dur, vel, out) {
   o.stop(end + 0.25); o2.stop(end + 0.25);
 }
 
-// Mõ gỗ: dùng khi chỉ luyện tiết tấu
 function woodblock(t, vel, out) {
   const o = ctx.createOscillator();
   const g = ctx.createGain();
@@ -239,7 +218,6 @@ function woodblock(t, vel, out) {
   o.stop(t + 0.1);
 }
 
-// Tiếng gõ phách (máy đếm nhịp): phách mạnh cao hơn
 function tick(t, strong, out) {
   const o = ctx.createOscillator();
   const g = ctx.createGain();
@@ -251,19 +229,9 @@ function tick(t, strong, out) {
   o.stop(t + 0.06);
 }
 
-/* =========================================================
-   Bộ hẹn giờ theo dòng thời gian của AudioContext
-   ---------------------------------------------------------
-   setInterval/requestAnimationFrame không đủ chính xác để gõ nhịp.
-   Thay vào đó, cứ ~25 ms bộ hẹn giờ "thức dậy" một lần và hẹn trước
-   mọi âm rơi vào 120 ms sắp tới, với thời điểm tính theo
-   ctx.currentTime (đồng hồ của card âm thanh). Âm thanh vì thế
-   luôn đúng nhịp, còn phần hình chỉ việc đuổi theo đồng hồ đó.
-   ========================================================= */
 const TICK_MS = 25;
 const SCHEDULE_AHEAD = 0.12;
 
-// Bộ hẹn giờ chạy trong Web Worker để không bị trình duyệt làm chậm khi chuyển tab
 function makeTicker(fn) {
   try {
     const src = `let id=0;onmessage=e=>{clearInterval(id);if(e.data>0)id=setInterval(()=>postMessage(0),e.data)}`;
@@ -279,13 +247,9 @@ function makeTicker(fn) {
 const ICON_PLAY = '<path d="M7 4.5v15l13-7.5z" fill="currentColor"/>';
 const ICON_STOP = '<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>';
 
-/* =========================================================
-   Giao diện dùng chung: thông báo ngắn, thông báo cho trình đọc màn hình
-   ========================================================= */
 let view = 'nhip';
 let toastTimer = 0;
 
-// Thông báo ngắn ở cuối màn hình, có thể kèm một nút (ví dụ "Hoàn tác")
 function showToast(msg, actLabel = '', act = null) {
   $('toastMsg').textContent = msg;
   $('toastAct').textContent = actLabel;
@@ -296,14 +260,12 @@ function showToast(msg, actLabel = '', act = null) {
 }
 function hideToast() { $('toast').hidden = true; }
 
-// Đọc cho trình đọc màn hình những sự kiện quan trọng (không đọc từng phách)
 function announce(msg) {
   const a = $('announcer');
   a.textContent = '';
   setTimeout(() => (a.textContent = msg), 40);
 }
 
-// Mở âm thanh. Trình duyệt có thể chặn tới khi người dùng chạm vào trang.
 function ensureAudio() {
   try {
     initAudio();
@@ -317,20 +279,14 @@ function ensureAudio() {
   return true;
 }
 
-// Chạy lại một hiệu ứng CSS ngắn trên phần tử
 function replay(el, cls) {
   el.classList.remove(cls);
   void el.offsetWidth;
   el.classList.add(cls);
 }
 
-/* =========================================================
-   TAB 1 · Lập trình nhịp (4 ô nhịp, chọn được số chỉ nhịp)
-   ========================================================= */
-const BARS = 4;   // dải luôn có 4 ô nhịp
+const BARS = 4;
 
-// Mỗi ô là một đơn vị của mẫu số: x/4 → nốt đen, x/2 → nốt trắng, x/8 → nốt móc đơn.
-// Ô đầu mỗi ô nhịp luôn nhấn mạnh; "accent" là các ô nhấn vừa (tính trong ô nhịp).
 const METERS = {
   '2/4': { unit: 'nốt đen', accent: [], presets: [
     { name: 'Mạnh – nhẹ', bpm: 96,  cells: 'RB RB RB RB' },
@@ -362,11 +318,10 @@ const METERS = {
 };
 const METER_ORDER = ['2/4', '3/4', '4/4', '2/2', '3/8', '6/8'];
 let METER = '4/4';
-let BEATS_PER_BAR = 4;   // số ô trong một ô nhịp
-let STEPS = 16;          // tổng số ô của dải
+let BEATS_PER_BAR = 4;
+let STEPS = 16;
 let PRESETS = METERS[METER].presets;
 
-// R = đỏ, B = xanh dương, Y = vàng, W = để trắng (phách lặng)
 const INSTRUMENTS = {
   R: { name: 'Trống cái' },
   B: { name: 'Chũm chọe' },
@@ -375,7 +330,6 @@ const INSTRUMENTS = {
 };
 const ORDER = ['R', 'B', 'Y', 'W'];
 
-// Mỗi nhạc cụ một hình, để học sinh khó phân biệt màu vẫn đọc được
 const ICONS = {
   R: '<circle cx="12" cy="12" r="9.5" fill="currentColor"/>',
   B: '<rect x="5" y="5" width="14" height="14" rx="1.5" transform="rotate(45 12 12)" fill="currentColor"/>',
@@ -384,7 +338,7 @@ const ICONS = {
 };
 
 const state = {
-  cells: Array(STEPS).fill('W'),   // mặc định: tất cả là phách lặng
+  cells: Array(STEPS).fill('W'),
   brush: 'R',
   bpm: 100,
   playing: false,
@@ -394,7 +348,7 @@ const state = {
 const scoreEl = $('score');
 let cellEls = [];
 let lastStep = -1;
-let focusIdx = 0;          // ô đang giữ tabindex=0 (di chuyển bằng phím mũi tên)
+let focusIdx = 0;
 
 function buildGrid() {
   scoreEl.innerHTML = '';
@@ -439,7 +393,6 @@ function renderCells() {
     el.setAttribute('aria-label', `${cellPlace(i)}: ${v === 'W' ? 'lặng' : INSTRUMENTS[v].name}`);
     if (!first) replay(el, 'pop');
   });
-  // Gợi ý chỉ cần khi lưới còn trống; giữ chỗ để lưới không nhảy dưới ngón tay
   $('gridHint').classList.toggle('is-hidden', state.cells.some((v) => v !== 'W'));
 }
 
@@ -457,7 +410,6 @@ function buildPalette() {
     const b = e.target.closest('.inst');
     if (b) setBrush(b.dataset.v);
   });
-  // Nhóm radio: mũi tên trái/phải đổi nhạc cụ
   pal.addEventListener('keydown', (e) => {
     const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
     if (!d) return;
@@ -496,7 +448,6 @@ function markPreset() {
     b.setAttribute('aria-pressed', n === state.preset ? 'true' : 'false'));
 }
 
-/* ----- Số chỉ nhịp: dựng lại dải theo số ô của một ô nhịp ----- */
 function buildMeters() {
   const box = $('meters');
   box.innerHTML = METER_ORDER.map((m) =>
@@ -507,7 +458,6 @@ function buildMeters() {
   });
 }
 
-// Đổi nhịp và dựng lại mọi thứ phụ thuộc số ô (lưới, mẫu, camera, mẫu giấy in)
 function applyMeter(m) {
   if (state.playing) stop();
   METER = m;
@@ -543,7 +493,6 @@ function setMeter(m) {
   announce(`Nhịp ${m}, ${STEPS} ô`);
 }
 
-// Chọn số ô nhịp mỗi hàng (4, 2 hoặc 1) sao cho ô đủ to để chạm
 function layoutGrid() {
   const w = $('gridWrap').clientWidth;
   if (!w) return;
@@ -551,7 +500,7 @@ function layoutGrid() {
   const max = present ? Math.min(innerHeight * 0.15, 140) : 64;
   const min = 44;
   const cellFor = (bpr) => {
-    const perBar = 18 + 6 * (BEATS_PER_BAR - 1);          // lề, khe giữa các ô, vạch nhịp
+    const perBar = 18 + 6 * (BEATS_PER_BAR - 1);
     return Math.floor((w - 40 - bpr * perBar) / (bpr * BEATS_PER_BAR));
   };
   let cell = cellFor(1);
@@ -562,7 +511,6 @@ function layoutGrid() {
 }
 if ('ResizeObserver' in window) new ResizeObserver(() => layoutGrid()).observe($('gridWrap'));
 
-/* ----- Hoàn tác: lưu trạng thái trước mỗi thao tác thay đổi lưới ----- */
 const undoStack = [];
 const snapshot = () => ({ cells: state.cells.slice(), bpm: state.bpm, preset: state.preset, meter: METER });
 
@@ -607,9 +555,8 @@ function clearAll() {
   showToast('Đã xoá hết 16 phách', 'Hoàn tác', undo);
 }
 
-/* ----- Tô màu: chạm một ô, hoặc kéo ngang qua nhiều ô ----- */
-let stroke = null;       // nhạc cụ đang tô trong một nét kéo
-let strokeSnap = null;   // trạng thái trước nét kéo, chỉ lưu vào hoàn tác khi có ô thật sự đổi
+let stroke = null;
+let strokeSnap = null;
 
 function paintCell(i, v) {
   if (state.cells[i] === v) return;
@@ -621,7 +568,6 @@ function paintCell(i, v) {
   if (v !== 'W' && !state.playing) audition(v);
 }
 
-// Chạm vào ô đã có đúng nhạc cụ đang chọn thì ô đó trở về phách lặng
 function beginStroke(i) {
   strokeSnap = snapshot();
   stroke = state.cells[i] === state.brush && state.brush !== 'W' ? 'W' : state.brush;
@@ -635,20 +581,17 @@ scoreEl.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   beginStroke(+c.dataset.i);
 });
-// Trên màn hình cảm ứng, pointer bị "giữ" bởi ô đầu tiên, nên tìm ô dưới ngón tay bằng toạ độ
 window.addEventListener('pointermove', (e) => {
   if (!stroke) return;
   const c = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.cell');
   if (c) paintCell(+c.dataset.i, stroke);
 });
 ['pointerup', 'pointercancel'].forEach((t) => window.addEventListener(t, () => { stroke = null; strokeSnap = null; }));
-// Bàn phím: Enter/Space trên ô tạo "click" không có pointerdown
 scoreEl.addEventListener('click', (e) => {
   const c = e.target.closest('.cell');
   if (c && e.detail === 0) { beginStroke(+c.dataset.i); stroke = null; strokeSnap = null; }
 });
 
-// Lưới chỉ có một điểm dừng Tab; mũi tên, Home, End di chuyển giữa các phách
 function setFocusCell(i, move = true) {
   cellEls[focusIdx].tabIndex = -1;
   focusIdx = i;
@@ -671,16 +614,14 @@ function playVoice(v, t, vel, out) {
   if (VOICES[v]) VOICES[v](t, vel, out);
 }
 
-// Nghe thử khi tô ô (lúc đang dừng)
 function audition(v) {
   if (!ensureAudio()) return;
   playVoice(v, ctx.currentTime + 0.01, 0.9, master);
 }
 
-/* ----- Bộ đếm nhịp của dải 16 phách ----- */
-let nextStep = 0;      // phách sẽ được hẹn tiếp theo
-let nextTime = 0;      // thời điểm (giây, theo ctx) của phách đó
-let queue = [];        // các phách đã hẹn, để phần hình biết con trỏ đang ở đâu
+let nextStep = 0;
+let nextTime = 0;
+let queue = [];
 let ticker = null;
 let bus = null;
 let rafId = 0;
@@ -689,7 +630,6 @@ function scheduler() {
   while (nextTime < ctx.currentTime + SCHEDULE_AHEAD) {
     const dur = 60 / state.bpm;
     const beat = nextStep % BEATS_PER_BAR;
-    // ô đầu ô nhịp mạnh, ô nhấn vừa (4/4: phách 3, 6/8: đếm 4) mạnh vừa, còn lại nhẹ
     const vel = beat === 0 ? 1 : METERS[METER].accent.includes(beat) ? 0.82 : 0.68;
     playVoice(state.cells[nextStep], nextTime, vel, bus);
     queue.push({ step: nextStep, time: nextTime, dur });
@@ -732,19 +672,16 @@ function stop() {
 function setBpm(v) {
   state.bpm = v;
   $('bpm').value = v;
-  // Nhịp x/8 đếm theo móc đơn nên không gắn thuật ngữ nhịp độ (vốn tính theo phách)
   const eighths = METER.endsWith('/8');
   $('bpmOut').textContent = `${v} ${eighths ? 'móc đơn' : 'phách'}/phút`;
   $('tempoTerm').textContent = eighths ? 'Đếm theo nốt móc đơn' : tempoTerm(v);
 }
 
-// "Ô nhịp 2 / 4 · đếm 3": khớp với hàng số đếm dưới mỗi ô nhịp
 const cellPlace = (i) => `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}, đếm ${(i % BEATS_PER_BAR) + 1}`;
 function setStepStatus(i) {
   $('stepStatus').textContent = `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1} / ${BARS} · đếm ${(i % BEATS_PER_BAR) + 1}`;
 }
 
-/* ----- Con trỏ phách: vạch mực dưới ô đang vang, theo đúng đồng hồ âm thanh ----- */
 function placePlayhead(i) {
   const wrap = $('gridWrap').getBoundingClientRect();
   const r = cellEls[i].getBoundingClientRect();
@@ -767,7 +704,6 @@ function setActive(i) {
 function draw() {
   rafId = requestAnimationFrame(draw);
   const now = ctx.currentTime;
-  // bỏ các phách đã qua, giữ lại phách đang vang
   while (queue.length > 1 && queue[1].time <= now) queue.shift();
   const cur = queue[0];
   if (cur && cur.time <= now && cur.step !== lastStep) setActive(cur.step);
@@ -779,24 +715,23 @@ $('clearBtn').addEventListener('click', clearAll);
 $('undoBtn').addEventListener('click', undo);
 window.addEventListener('resize', () => { if (state.playing && lastStep >= 0) placePlayhead(lastStep); });
 
-/* ----- Quét dải giấy: camera chỉ xem trước, ghi vào lưới khi người dùng bấm ----- */
 const video = $('video');
 const overlay = $('overlay');
 const work = $('work');
 const wctx = work.getContext('2d', { willReadFrequently: true });
 const octx = overlay.getContext('2d');
 
-const WORK_W = 480, WORK_H = 360;   // ảnh thu nhỏ để phân tích, đủ chi tiết cho 16 ô
+const WORK_W = 480, WORK_H = 360;
 const COLOR_RULES = {
-  minSat: 0.30,                       // dưới mức này coi là giấy trắng / xám
-  minVal: 0.28,                       // tối quá thì bỏ qua (bóng đổ)
-  red:    [[0, 18], [330, 360]],      // khoảng màu (độ) theo HSV
+  minSat: 0.30,
+  minVal: 0.28,
+  red:    [[0, 18], [330, 360]],
   yellow: [[35, 70]],
   blue:   [[180, 255]],
 };
-const MIN_COVER = 0.22;   // tỉ lệ điểm ảnh cùng màu tối thiểu để nhận là có chấm
-const STABLE_FRAMES = 4;  // một màu phải giữ nguyên vài khung hình mới tính
-const MIN_DOTS = 3;       // ít nhất bấy nhiêu chấm màu mới coi là đang thấy dải giấy
+const MIN_COVER = 0.22;
+const STABLE_FRAMES = 4;
+const MIN_DOTS = 3;
 const SCAN_MS = 70;
 
 let camStream = null;
@@ -833,7 +768,6 @@ function classifyPixel(r, g, b) {
   return null;
 }
 
-// 16 ô khung xếp ngang trên ảnh, cao độ theo thanh "Dời khung quét"
 function zones() {
   const marginX = workW * 0.04;
   const zw = (workW - marginX * 2) / STEPS;
@@ -846,7 +780,6 @@ function zones() {
   }));
 }
 
-// Mỗi ô: đếm phiếu màu của các điểm ảnh, màu thắng phải phủ đủ diện tích
 function classifyZone(data, z) {
   const votes = { R: 0, B: 0, Y: 0 };
   let total = 0;
@@ -968,7 +901,6 @@ function stopCamera() {
   $('camStatus').textContent = 'Camera đang tắt';
 }
 
-// Câu lỗi theo đúng nguyên nhân, kèm cách khắc phục
 const CAM_ERRORS = {
   NotAllowedError: 'Camera đang bị chặn. Bấm biểu tượng ổ khoá cạnh địa chỉ trang → Cho phép camera, rồi thử lại.',
   SecurityError: 'Camera đang bị chặn. Bấm biểu tượng ổ khoá cạnh địa chỉ trang → Cho phép camera, rồi thử lại.',
@@ -1101,7 +1033,6 @@ $('camBox').addEventListener('drop', (e) => {
   loadPhoto(e.dataTransfer.files[0]);
 });
 
-// Mẫu dải giấy để in (khổ A4 ngang) theo nhịp đang chọn, tạo ngay trên máy
 function buildStripDownload() {
   const w = 297, x0 = 10, gap = 2.5, groupGap = 7;
   const cell = Math.min(14, (w - 2 * x0 - (BARS - 1) * groupGap - (STEPS - BARS) * gap) / STEPS);
@@ -1125,9 +1056,6 @@ ${rects}${nums}</svg>`;
 $('camBtn').addEventListener('click', toggleCamera);
 $('camWrite').addEventListener('click', writeFromCamera);
 
-/* =========================================================
-   TAB 2 · Bài đọc nhạc
-   ========================================================= */
 const SOLFA = { C: 'Đô', D: 'Rê', E: 'Mi', F: 'Fa', G: 'Son', A: 'La', B: 'Si' };
 const LETTERS = 'CDEFGAB';
 const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -1151,14 +1079,12 @@ function parsePitch(p) {
   };
 }
 
-// 2/4, 3/4, 4/4 -> phách là nốt đen (2 móc đơn); 3/8 -> móc đơn; 6/8 -> đen chấm dôi (3 móc đơn)
 function meterInfo(meter) {
   const [n, d] = meter.split('/').map(Number);
   const compound = d === 8 && n % 3 === 0 && n > 3;
   return { n, d, barLen: n * 8 / d, beatLen: compound ? 3 : 8 / d };
 }
 
-// Chuỗi nốt -> danh sách ô nhịp (kèm dấu nhắc lại và khung thay đổi)
 function parseScore(str) {
   const bars = [];
   let cur = { items: [] };
@@ -1184,7 +1110,6 @@ function parseScore(str) {
   return bars;
 }
 
-// Trải phẳng dấu nhắc lại: thứ tự các ô nhịp thực sự được phát
 function expand(bars) {
   const out = [];
   let i = 0, repStart = 0, second = false, inVolta1 = false;
@@ -1192,7 +1117,7 @@ function expand(bars) {
     const b = bars[i];
     if (b.volta === 1) inVolta1 = true;
     if (b.volta === 2) { inVolta1 = false; second = false; }
-    if (second && inVolta1) { i++; continue; }      // lần 2 bỏ qua khung 1
+    if (second && inVolta1) { i++; continue; }
     if (b.repeatStart && !second) repStart = i;
     out.push(i);
     if (b.repeatEnd) {
@@ -1204,11 +1129,9 @@ function expand(bars) {
   return out;
 }
 
-// Dựng dòng thời gian: nốt (đã gộp dấu nối), phách gõ, nốt sáng
 function buildTimeline() {
   const { bars, mi } = rd;
   const events = [];
-  // đếm vào một ô nhịp trước khi bắt đầu
   const beatsPerBar = Math.round(mi.barLen / mi.beatLen);
   for (let k = 0; k < beatsPerBar; k++) {
     events.push({ start: -mi.barLen + k * mi.beatLen, type: 'count', strong: k === 0, n: k + 1 });
@@ -1217,7 +1140,7 @@ function buildTimeline() {
   let held = null;
   expand(bars).forEach((bi) => {
     const bar = bars[bi];
-    const off = bi === 0 && bar.len < mi.barLen ? mi.barLen - bar.len : 0;   // ô nhịp lấy đà
+    const off = bi === 0 && bar.len < mi.barLen ? mi.barLen - bar.len : 0;
     for (let b = 0; b < mi.barLen - 1e-6; b += mi.beatLen) {
       const p = b - off;
       if (p > -1e-6 && p < bar.len - 1e-6) events.push({ start: pos + p, type: 'beat', strong: b === 0 });
@@ -1239,7 +1162,6 @@ function buildTimeline() {
   rd.firstIdx = events.findIndex((e) => e.start >= 0);
 }
 
-// Đổi một biến CSS độ dài (có thể là clamp(), vh…) ra số px bằng một phần tử đo tạm
 function cssPx(el, name, fallback) {
   const probe = document.createElement('div');
   probe.style.cssText = `position:absolute;visibility:hidden;width:0;height:var(${name})`;
@@ -1249,7 +1171,6 @@ function cssPx(el, name, fallback) {
   return h || fallback;
 }
 
-// Vẽ bản nhạc: mỗi ô nhịp một khung, nốt là khối màu dài theo trường độ, cao theo cao độ
 function renderScore() {
   const { bars, mi } = rd;
   const box = $('rScore');
@@ -1299,7 +1220,6 @@ function renderScore() {
         n.title = name + (it.oct >= 5 ? ' (quãng tám cao)' : it.oct <= 3 ? ' (quãng tám thấp)' : '') + ' · bấm để nghe';
         n.addEventListener('click', () => playNote(it));
       }
-      // nốt được nối từ ô nhịp trước sang
       const before = x === 0 ? lastItemOf(bars[bi - 1]) : prev;
       if (!it.rest && before && before.tie && before.midi === it.midi) n.classList.add('cont');
       lane.appendChild(n);
@@ -1310,7 +1230,6 @@ function renderScore() {
     el.appendChild(lane);
     box.appendChild(el);
   });
-  // Bản nhạc dạng chữ cho trình đọc màn hình
   box.setAttribute('role', 'img');
   box.setAttribute('aria-label', scoreText());
 }
@@ -1328,7 +1247,6 @@ function readingsOf(grade) {
 function bookOf(grade) { return BOOKS.find((b) => b.grade === grade); }
 function readingTitle(r) { return `Bài đọc nhạc số ${r.no}`; }
 const topicName = (r) => r.topic.replace(/^Chủ đề \d+:\s*/, '');
-// Chuẩn hoá dòng tác giả về dạng "Nhạc: …"
 const originText = (r) => (r.origin.includes(':') ? r.origin : `Nhạc: ${r.origin.replace(/^Nhạc\s+/, '')}`);
 
 function buildGrades() {
@@ -1394,7 +1312,6 @@ function selectReading(r) {
   [...list.querySelectorAll('.ritem')].forEach((b) => {
     const on = +b.dataset.no === r.no;
     b.setAttribute('aria-current', on ? 'true' : 'false');
-    // trên màn hình hẹp danh sách cuộn ngang: đưa bài đang chọn vào tầm nhìn
     if (on && list.scrollWidth > list.clientWidth) list.scrollLeft = b.parentElement.offsetLeft - list.offsetLeft - 4;
   });
   $('rTitle').textContent = readingTitle(r) + (r.name ? ` · ${r.name}` : '');
@@ -1422,11 +1339,9 @@ function refreshScore() {
   buildTimeline();
 }
 
-/* ----- Bấm vào một nốt: nghe đúng cao độ, dài theo trường độ ở nhịp độ đang chọn ----- */
 let tapTimer = 0;
 function playNote(it) {
   if (it.rest || !ensureAudio()) return;
-  // nốt có dấu nối thì nghe hết cả phần ngân tiếp
   const items = rd.bars.flatMap((b) => b.items);
   let k = items.indexOf(it);
   let dur = it.dur;
@@ -1437,7 +1352,6 @@ function playNote(it) {
   }
   const sec = Math.min(Math.max(dur * spe(), 0.3), 2.5);
   tone(it.midi, ctx.currentTime + 0.01, sec, 1, master);
-  // Lúc đang dừng thì đánh dấu nốt vừa bấm; lúc đang phát, khung vẫn theo bài
   if (!rd.playing) {
     setCurrent(it);
     clearTimeout(tapTimer);
@@ -1445,7 +1359,6 @@ function playNote(it) {
   }
 }
 
-/* ----- Nốt đang vang: khối màu sáng viền, hoặc khung quanh nốt trên khuông ----- */
 function setCurrent(it) {
   if (rd.cur && rd.cur.el) rd.cur.el.classList.remove('now');
   rd.cur = it;
@@ -1463,12 +1376,10 @@ function setCurrent(it) {
   cursor.hidden = false;
 }
 
-/* ----- Khuông nhạc: đổi bài sang ký hiệu ABC rồi để thư viện abcjs vẽ ----- */
 const ABCJS_URL = 'https://cdn.jsdelivr.net/npm/abcjs@6.5.2/dist/abcjs-basic-min.js';
 let abcLoading = null;
 let staffToken = 0;
 
-// Chỉ tải thư viện khi có người chọn xem khuông nhạc
 function loadAbc() {
   if (window.ABCJS) return Promise.resolve();
   if (!abcLoading) {
@@ -1483,12 +1394,10 @@ function loadAbc() {
   return abcLoading;
 }
 
-// C4 = "C", C5 = "c", C6 = "c'", B3 = "B,"
 function abcPitch(it) {
   const base = it.oct >= 5 ? it.letter.toLowerCase() : it.letter;
   return base + (it.oct >= 6 ? "'".repeat(it.oct - 5) : it.oct <= 3 ? ','.repeat(4 - it.oct) : '');
 }
-// Trường độ tính theo móc đơn, khớp với L:1/8 của ABC
 function abcDur(d) {
   if (d === 1) return '';
   if (Number.isInteger(d)) return String(d);
@@ -1503,14 +1412,13 @@ function buildAbc() {
   const words = [];
   let prevItem = null;
   bars.forEach((bar, bi) => {
-    const accs = {};          // dấu hoá bất thường còn hiệu lực trong ô nhịp
+    const accs = {};
     if (bi === 0 && bar.repeatStart) music += '|: ';
     if (bar.volta) music += `[${bar.volta} `;
     const off = bi === 0 && bar.len < mi.barLen ? mi.barLen - bar.len : 0;
     let p = off;
     let prev = null;
     bar.items.forEach((it) => {
-      // các nốt móc trong cùng một phách viết liền nhau để được nối đuôi (beam)
       const sameBeat = prev && Math.floor((p + 1e-6) / mi.beatLen) === Math.floor((p - prev.dur + 1e-6) / mi.beatLen);
       const beam = prev && sameBeat && prev.dur < 2 && it.dur < 2 && !prev.rest && !it.rest;
       if (prev && !beam) music += ' ';
@@ -1555,11 +1463,10 @@ async function renderStaff() {
       $('staffRetry').addEventListener('click', refreshScore);
       return;
     }
-    if (token !== staffToken) return;   // người dùng đã đổi bài / cách xem trong lúc tải
+    if (token !== staffToken) return;
   }
   msg.hidden = true;
   const present = document.body.classList.contains('present');
-  // đo khung cha: abcjs tự gắn bề rộng cố định lên khung vẽ của nó sau mỗi lần vẽ
   const width = $('rWrap').clientWidth;
   const scale = present ? Math.max(1.4, Math.min(2.2, innerHeight / 480)) : width < 520 ? 0.95 : 1.2;
   const tune = window.ABCJS.renderAbc(box, buildAbc(), {
@@ -1568,9 +1475,8 @@ async function renderStaff() {
     wrap: { minSpacing: 1.6, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
     paddingtop: 4, paddingbottom: 4, paddingleft: 2, paddingright: 2,
     format: { vocalfont: 'Be Vietnam Pro 13', annotationfont: 'Be Vietnam Pro 12' },
-    selectTypes: false,   // tắt kiểu "chọn nốt tô đỏ" của abcjs; bấm nốt thì nghe nốt đó (xem dưới)
+    selectTypes: false,
   })[0];
-  // Ghép từng nốt trên khuông với nốt trong dữ liệu (cùng thứ tự)
   const notes = [];
   tune.lines.forEach((line) => (line.staff || []).forEach((st) => st.voices.forEach((v) => v.forEach((el) => {
     if (el.el_type === 'note') notes.push(el);
@@ -1578,7 +1484,6 @@ async function renderStaff() {
   const items = rd.bars.flatMap((b) => b.items);
   items.forEach((it, k) => {
     it.staffEls = (notes[k] && notes[k].abselem && notes[k].abselem.elemset) || [];
-    // "Khuông có màu": chỉ tô đầu nốt, tên nốt bên dưới vẫn màu mực cho dễ đọc
     if (rOpt.look === 'color' && !it.rest) {
       it.staffEls.forEach((e) => e.querySelectorAll('.abcjs-notehead').forEach((h) => h.classList.add(`abc-c-${it.letter}`)));
     }
@@ -1593,7 +1498,6 @@ async function renderStaff() {
   box.setAttribute('aria-label', scoreText());
 }
 
-// Vẽ lại khuông khi bề rộng thay đổi (xoay máy, thu nhỏ cửa sổ)
 let staffW = 0;
 if ('ResizeObserver' in window) {
   new ResizeObserver(() => {
@@ -1622,16 +1526,13 @@ function setRBpm(v) {
   rd.bpm = v;
   $('rBpm').value = v;
   $('rBpmOut').textContent = `${v} phách/phút`;
-  // Nhịp x/8: ghi rõ phách là nốt gì. Còn lại: ghi chỉ dẫn nhịp độ in trong sách.
   $('rTempoTerm').textContent = rd.mi.d === 8
     ? `1 phách = ${rd.mi.beatLen === 3 ? 'nốt đen chấm dôi' : 'nốt móc đơn'}`
     : `Sách ghi: ${rd.reading ? rd.reading.tempo : tempoTerm(v)}`;
 }
 
-// giây cho một móc đơn ở nhịp độ hiện tại (nhịp độ tính theo phách)
 const spe = () => 60 / (rd.bpm * rd.mi.beatLen);
 
-// Hẹn trước các sự kiện trong 120 ms tới (giống dải 16 phách, nhưng chạy theo danh sách sự kiện)
 function rSchedule() {
   const horizon = ctx.currentTime + SCHEDULE_AHEAD;
   for (;;) {
@@ -1741,9 +1642,6 @@ function buildLegend() {
     '<span class="x">nốt mờ: ngân tiếp (dấu nối)</span>';
 }
 
-/* =========================================================
-   TAB 3 · Sách giáo khoa
-   ========================================================= */
 function buildBooks() {
   $('books').innerHTML = BOOKS.map((b) => {
     const n = readingsOf(b.grade).length;
@@ -1761,9 +1659,6 @@ function buildBooks() {
   }).join('');
 }
 
-/* =========================================================
-   Chuyển tab, trình chiếu, phím tắt, giao diện sáng / tối
-   ========================================================= */
 const VIEWS = ['nhip', 'doc', 'sgk'];
 const VIEW_TITLES = { nhip: 'Lập trình nhịp', doc: 'Bài đọc nhạc', sgk: 'Sách giáo khoa' };
 
@@ -1786,7 +1681,6 @@ function toggle() {
   else if (view === 'doc') rd.playing ? rStop() : rStart();
 }
 
-// Đường dẫn: #nhip, #doc, #doc/7, #doc/7/3, #sgk
 function go(path) {
   try { history.pushState(null, '', `#${path}`); } catch (e) {}
   route(path);
@@ -1818,7 +1712,6 @@ function route(path = location.hash.replace('#', '')) {
 document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
   go(t.dataset.view === 'doc' && rd.reading ? `doc/${rd.reading.grade}/${rd.reading.no}` : t.dataset.view);
 }));
-// Tab chính: mũi tên trái/phải chuyển phần học
 $('tab-nhip').parentElement.addEventListener('keydown', (e) => {
   const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
   if (!d) return;
@@ -1827,7 +1720,6 @@ $('tab-nhip').parentElement.addEventListener('keydown', (e) => {
   go(next);
   $(`tab-${next}`).focus();
 });
-// Liên kết nội bộ (#doc/6, logo…) đi qua go() để chạy được cả khi trang mở dạng tệp
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[href^="#"]');
   if (!a) return;
@@ -1836,7 +1728,6 @@ document.addEventListener('click', (e) => {
 });
 window.addEventListener('popstate', () => route());
 
-/* ----- Trình chiếu: chữ và ô to theo chiều cao màn hình, ẩn phần phụ ----- */
 function setPresent(on) {
   document.body.classList.toggle('present', on);
   $('presentBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -1849,14 +1740,11 @@ function setPresent(on) {
   requestAnimationFrame(() => { layoutGrid(); refreshScore(); });
 }
 $('presentBtn').addEventListener('click', () => setPresent(!document.body.classList.contains('present')));
-// Bấm Esc thoát toàn màn hình thì cũng thoát trình chiếu
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement && document.body.classList.contains('present')) setPresent(false);
 });
 
-/* ----- Phím tắt ----- */
 const isTyping = (el) => el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"]');
-// Space trên nút, liên kết, ô chọn… là "bấm" phần tử đó, không phải phát/dừng
 const isInteractive = (el) => el instanceof Element && el.closest('button, a, input, select, textarea, summary, [role="tab"], [contenteditable="true"]');
 
 document.addEventListener('keydown', (e) => {
@@ -1880,7 +1768,6 @@ document.addEventListener('keyup', (e) => {
   if (e.code === 'Space' && !isInteractive(e.target)) e.preventDefault();
 });
 
-/* ----- Giao diện sáng / tối: biểu tượng cho biết sẽ chuyển sang đâu ----- */
 const ICON_MOON = '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
 const ICON_SUN = '<circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
 
@@ -1913,7 +1800,6 @@ buildGrades();
 buildLegend();
 buildBooks();
 setThemeUI();
-// Nhớ cách xem bài đọc nhạc lần trước
 try {
   const look = localStorage.getItem('beatpaper-look');
   if (['blocks', 'color', 'staff'].includes(look)) {
