@@ -531,6 +531,64 @@ body.present .count { font-size: clamp(13px, 2.2vh, 22px); }
 body.present .rscore { --u: clamp(26px, 4.6vh, 56px); --lane: clamp(112px, 26vh, 300px); --nh: clamp(26px, 6vh, 64px); gap: 40px 0; }
 body.present .count-big { font-size: clamp(96px, 30vh, 320px); }
 
+:root {
+  --ease: cubic-bezier(.2, 0, 0, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --d-fast: 120ms;
+  --d-med: 200ms;
+  --d-slow: 320ms;
+}
+
+.seg, .instruments { position: relative; }
+@media (min-width: 761px) { .nav { position: relative; } }
+.seg-thumb {
+  position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; opacity: 0;
+  border-radius: 7px; background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.seg-thumb.ready { transition: transform var(--d-med) var(--ease), width var(--d-med) var(--ease), height var(--d-med) var(--ease), opacity var(--d-fast) var(--ease); }
+.nav > .seg-thumb { border-radius: var(--r-md); background: var(--sunk); box-shadow: none; }
+.has-thumb > button, .has-thumb > .inst { position: relative; z-index: 1; }
+.has-thumb > button[aria-pressed="true"],
+.has-thumb > button[aria-selected="true"],
+.has-thumb > .inst[aria-checked="true"] { background: transparent; box-shadow: none; }
+.has-thumb > .tab:hover:not([aria-selected="true"]) { background: color-mix(in srgb, var(--sunk) 60%, transparent); }
+
+.btn, .play, .seg button, .inst, .toggle, .chip, .tab, .ritem, .icon-btn {
+  transition: background-color var(--d-fast) var(--ease), color var(--d-fast) var(--ease), box-shadow var(--d-fast) var(--ease), transform var(--d-fast) var(--ease);
+}
+.seg button:active, .inst:active, .toggle:active, .chip:active, .ritem:active, .icon-btn:active { transform: scale(.97); }
+.cell { transition: border-color var(--d-fast) var(--ease), transform var(--d-fast) var(--ease); }
+.cell:active { transform: scale(.96); }
+
+.playhead { transition: transform var(--d-fast) var(--ease), width var(--d-fast) var(--ease), opacity var(--d-med) var(--ease); }
+.staff-cursor { transition: transform var(--d-fast) var(--ease), width var(--d-fast) var(--ease), height var(--d-fast) var(--ease); }
+.chips-det span { transition: background-color var(--d-med) var(--ease), box-shadow var(--d-med) var(--ease); }
+.nt.now { transition: outline-color var(--d-fast) var(--ease); }
+
+.toast { opacity: 0; transform: translate(-50%, 16px) scale(.98); transition: opacity var(--d-med) var(--ease-in), transform var(--d-med) var(--ease-in); }
+.toast.is-in { opacity: 1; transform: translate(-50%, 0) scale(1); transition: opacity var(--d-med) var(--ease), transform var(--d-slow) var(--ease); }
+
+.keys[open] .popover { transform-origin: top right; animation: pop-in var(--d-med) var(--ease); }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-6px) scale(.97); } }
+
+.view.enter { animation: view-in var(--d-slow) var(--ease); }
+@keyframes view-in { from { opacity: 0; transform: translateY(8px); } }
+.fade-in { animation: fade-in var(--d-slow) var(--ease); }
+@keyframes fade-in { from { opacity: 0; transform: translateY(4px); } }
+.cam-box video, .cam-box canvas.overlay { animation: fade-in var(--d-slow) var(--ease); }
+
+@media (min-width: 761px) { .appbar { view-transition-name: appbar; } }
+::view-transition-old(root) { animation: var(--d-fast) var(--ease-in) both vt-out; }
+::view-transition-new(root) { animation: var(--d-slow) var(--ease) 40ms both vt-in; }
+::view-transition-group(appbar), ::view-transition-group(nav) { animation-duration: var(--d-med); animation-timing-function: var(--ease); }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(8px); } }
+@media (max-width: 760px) {
+  .nav { view-transition-name: nav; }
+  .nav > .seg-thumb { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

@@ -250,15 +250,85 @@ const ICON_STOP = '<rect x="6" y="6" width="12" height="12" rx="2" fill="current
 let view = 'nhip';
 let toastTimer = 0;
 
+let toastOutTimer = 0;
+
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function transitionView(update) {
+  if (!document.startViewTransition || reduceMotion() || document.hidden) { update(); return; }
+  let done = false;
+  const run = () => {
+    if (done) return;
+    done = true;
+    update();
+  };
+  const vt = document.startViewTransition(run);
+  const ignore = () => {};
+  if (vt.ready) vt.ready.catch(ignore);
+  if (vt.finished) vt.finished.catch(ignore);
+  if (vt.updateCallbackDone) vt.updateCallbackDone.catch(ignore);
+  setTimeout(() => {
+    if (done) return;
+    if (vt.skipTransition) vt.skipTransition();
+    run();
+  }, 250);
+}
+
 function showToast(msg, actLabel = '', act = null) {
+  const toast = $('toast');
   $('toastMsg').textContent = msg;
   $('toastAct').textContent = actLabel;
   $('toastAct').onclick = act ? () => { hideToast(); act(); } : null;
-  $('toast').hidden = false;
+  clearTimeout(toastOutTimer);
+  toast.hidden = false;
+  void toast.offsetWidth;
+  toast.classList.add('is-in');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, 6000);
 }
-function hideToast() { $('toast').hidden = true; }
+function hideToast() {
+  const toast = $('toast');
+  if (toast.hidden) return;
+  toast.classList.remove('is-in');
+  clearTimeout(toastOutTimer);
+  toastOutTimer = setTimeout(() => { if (!toast.classList.contains('is-in')) toast.hidden = true; }, reduceMotion() ? 0 : 200);
+}
+
+function attachThumb(box) {
+  const thumb = document.createElement('span');
+  thumb.className = 'seg-thumb';
+  thumb.setAttribute('aria-hidden', 'true');
+  box.prepend(thumb);
+  box.classList.add('has-thumb');
+  const sync = () => moveThumb(box, thumb);
+  thumbSyncs.push(sync);
+  new MutationObserver(sync).observe(box, { subtree: true, attributes: true, attributeFilter: ['aria-pressed', 'aria-selected', 'aria-checked'] });
+  if ('ResizeObserver' in window) new ResizeObserver(sync).observe(box);
+  sync();
+}
+
+const thumbSyncs = [];
+function refreshThumbs() {
+  thumbSyncs.forEach((sync) => sync());
+}
+window.addEventListener('resize', refreshThumbs);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshThumbs);
+
+function moveThumb(box, thumb) {
+  const sel = box.querySelector(':scope > [aria-pressed="true"], :scope > [aria-selected="true"], :scope > [aria-checked="true"]');
+  if (!sel || !box.offsetWidth || !sel.offsetWidth) { thumb.style.opacity = '0'; return; }
+  const jump = thumb.style.opacity !== '1';
+  if (jump) thumb.classList.remove('ready');
+  thumb.style.width = `${sel.offsetWidth}px`;
+  thumb.style.height = `${sel.offsetHeight}px`;
+  thumb.style.transform = `translate(${sel.offsetLeft}px, ${sel.offsetTop}px)`;
+  thumb.style.opacity = '1';
+  if (jump) setTimeout(() => thumb.classList.add('ready'), 60);
+}
+
+function setupThumbs() {
+  document.querySelectorAll('.seg, .instruments, .nav').forEach(attachThumb);
+}
 
 function announce(msg) {
   const a = $('announcer');
@@ -689,12 +759,19 @@ function setStepStatus(i) {
   $('stepStatus').textContent = `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1} / ${BARS} · đếm ${(i % BEATS_PER_BAR) + 1}`;
 }
 
+let playheadX = -1;
+let playheadY = -1;
 function placePlayhead(i) {
   const wrap = $('gridWrap').getBoundingClientRect();
   const r = cellEls[i].getBoundingClientRect();
   const ph = $('playhead');
+  const x = r.left - wrap.left;
+  const y = r.bottom - wrap.top + 4;
+  ph.style.transition = x < playheadX || y !== playheadY ? 'none' : '';
   ph.style.width = `${r.width}px`;
-  ph.style.transform = `translate(${r.left - wrap.left}px, ${r.bottom - wrap.top + 4}px)`;
+  ph.style.transform = `translate(${x}px, ${y}px)`;
+  playheadX = x;
+  playheadY = y;
 }
 
 function setActive(i) {
@@ -1345,6 +1422,7 @@ function refreshScore() {
   if (blocks) { $('staffMsg').hidden = true; renderScore(); }
   else renderStaff();
   buildTimeline();
+  replay($('rWrap'), 'fade-in');
 }
 
 let tapTimer = 0;
@@ -1378,11 +1456,18 @@ function setCurrent(it) {
   const wrap = $('rWrap').getBoundingClientRect();
   const r = els.map((e) => e.getBoundingClientRect())
     .reduce((a, b) => ({ left: Math.min(a.left, b.left), top: Math.min(a.top, b.top), right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom) }));
-  cursor.style.transform = `translate(${r.left - wrap.left - 5}px, ${r.top - wrap.top - 5}px)`;
+  const x = r.left - wrap.left - 5;
+  const y = r.top - wrap.top - 5;
+  cursor.style.transition = cursor.hidden || Math.abs(y - cursorY) > 4 || x < cursorX ? 'none' : '';
+  cursor.style.transform = `translate(${x}px, ${y}px)`;
   cursor.style.width = `${r.right - r.left + 10}px`;
   cursor.style.height = `${r.bottom - r.top + 10}px`;
   cursor.hidden = false;
+  cursorX = x;
+  cursorY = y;
 }
+let cursorX = -1;
+let cursorY = -1;
 
 const ABCJS_URL = 'https://cdn.jsdelivr.net/npm/abcjs@6.5.2/dist/abcjs-basic-min.js';
 let abcLoading = null;
@@ -1691,7 +1776,9 @@ function toggle() {
 
 function go(path) {
   try { history.pushState(null, '', `#${path}`); } catch (e) {}
-  route(path);
+  const nextView = VIEWS.includes(path.split('/')[0]) ? path.split('/')[0] : 'nhip';
+  if (nextView === view) route(path);
+  else transitionView(() => route(path));
 }
 
 function route(path = location.hash.replace('#', '')) {
@@ -1708,13 +1795,17 @@ function route(path = location.hash.replace('#', '')) {
     t.setAttribute('aria-selected', on ? 'true' : 'false');
     t.tabIndex = on ? 0 : -1;
   });
-  if (changed) window.scrollTo(0, 0);
+  if (changed) {
+    window.scrollTo(0, 0);
+    if (!document.startViewTransition) replay($(`view-${next}`), 'enter');
+  }
   if (next === 'doc') {
     const grade = BOOKS.some((b) => b.grade === +g) ? +g : rd.grade;
     selectGrade(grade, +n);
   }
   setTitle();
   setPlayUI();
+  refreshThumbs();
 }
 
 document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
@@ -1789,11 +1880,11 @@ function setThemeUI() {
   $('themeBtn').setAttribute('aria-label', dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối');
   $('themeBtn').title = $('themeBtn').getAttribute('aria-label');
 }
-$('themeBtn').addEventListener('click', () => {
+$('themeBtn').addEventListener('click', () => transitionView(() => {
   document.documentElement.dataset.theme = isDark() ? 'light' : 'dark';
   try { localStorage.setItem('beatpaper-theme', document.documentElement.dataset.theme); } catch (e) {}
   setThemeUI();
-});
+}));
 try {
   const saved = localStorage.getItem('beatpaper-theme');
   if (saved) document.documentElement.dataset.theme = saved;
@@ -1816,4 +1907,5 @@ try {
       b.setAttribute('aria-pressed', b.dataset.look === look ? 'true' : 'false'));
   }
 } catch (e) {}
+setupThumbs();
 route();
