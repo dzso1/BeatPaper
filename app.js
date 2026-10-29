@@ -18,7 +18,7 @@ function tempoTerm(bpm) {
 
 const BOOKS = [
   { grade: 6, url: 'https://hanhtrangso.nxbgd.vn/ebook/read/am-nhac-6-10772', pageSuffix: (p) => `?page=${p}` },
-  { grade: 7, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-7.4700049640', pageSuffix: (p) => `#page=${p + 1}` },
+  { grade: 7, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-7.4700049640', pageSuffix: (p) => `#page=${p}` },
   { grade: 8, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-8.4700139323', pageSuffix: (p) => `#page=${p}` },
   { grade: 9, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-9.4700486486', pageSuffix: (p) => `#page=${p}` },
 ];
