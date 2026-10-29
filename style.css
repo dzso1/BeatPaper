@@ -200,7 +200,6 @@ input[type="range"]:focus-visible { outline-offset: 4px; }
 .hint { font-size: 14px; color: var(--ink-2); }
 .hint.is-hidden { display: none; }
 .status { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); white-space: nowrap; }
-.note { margin-top: var(--s-5); max-width: 720px; font-size: 14px; color: var(--ink-3); }
 .btn-row { display: flex; gap: var(--s-2); flex-wrap: wrap; }
 
 .dock {
