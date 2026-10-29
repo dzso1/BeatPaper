@@ -245,21 +245,28 @@ input[type="range"]:focus-visible { outline-offset: 4px; }
 .presets { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 
 .grid-wrap { position: relative; }
-.score { --cell: 52px; display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--s-5) 0; }
-.timesig {
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
-  font-family: var(--mono); font-weight: 600; font-size: 22px; line-height: 1; padding: 0 var(--s-3) 26px 0;
+.score {
+  --cell-h: 56px;
+  display: grid; grid-template-columns: 40px repeat(var(--bpr, 4), minmax(0, 1fr));
+  row-gap: var(--s-5); align-items: start;
 }
-.measure { display: flex; flex-direction: column; padding: 0 var(--s-2); border-right: 2px solid var(--ink-3); }
+.timesig {
+  grid-column: 1; grid-row: 1; height: var(--cell-h);
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  font-family: var(--mono); font-weight: 600; font-size: 22px; line-height: 1;
+}
+.measure { display: flex; flex-direction: column; min-width: 0; padding: 0 var(--s-2); border-right: 2px solid var(--ink-3); }
 .measure:last-child { border-right: 4px double var(--ink-2); }
-.measure .beats, .measure .counts { display: flex; gap: 6px; }
-.measure .counts { margin-top: 14px; }
-.count { width: var(--cell); text-align: center; font-family: var(--mono); font-size: var(--t-xs); color: var(--ink-3); }
+.measure .beats, .measure .counts { display: flex; gap: 12px; }
+.measure .counts { margin-top: 12px; }
+.grp { flex: var(--n) 1 0; min-width: 0; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; }
+.count { text-align: center; font-family: var(--mono); font-size: var(--t-xs); color: var(--ink-3); }
+.count.mid { color: var(--ink-2); font-weight: 600; }
 .count.strong { color: var(--ink); font-weight: 600; }
 
 .cell {
   position: relative; display: grid; place-items: center; padding: 0;
-  width: var(--cell); height: var(--cell);
+  width: 100%; height: var(--cell-h);
   border: 1.5px solid var(--cell-line); border-radius: var(--r-md); background: var(--rest);
   touch-action: pan-y; user-select: none; -webkit-user-select: none;
   transition: border-color .12s;

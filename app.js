@@ -381,7 +381,7 @@ const METERS = {
     { name: 'Mạnh – nhẹ – nhẹ', bpm: 144, cells: 'RBB RBB RBB RBB' },
     { name: 'Đung đưa',         bpm: 132, cells: 'RWY RWY RBY RWW' },
   ] },
-  '6/8': { unit: 'nốt móc đơn', accent: [3], presets: [
+  '6/8': { unit: 'nốt móc đơn', accent: [3], group: 3, presets: [
     { name: 'Mạnh – nhẹ', bpm: 160, cells: 'RBBYBB RBBYBB RBBYBB RBBYBB' },
     { name: 'Chèo thuyền', bpm: 144, cells: 'RWBYWB RWBYWB RWBYWB RRBYWW' },
   ] },
@@ -430,27 +430,39 @@ function buildGrid() {
   scoreEl.appendChild(ts);
 
   cellEls = [];
-  let measure;
+  const group = METERS[METER].group || BEATS_PER_BAR;
+  const accent = METERS[METER].accent;
+  let measure, beatGroup, countGroup;
   for (let i = 0; i < STEPS; i++) {
-    if (i % BEATS_PER_BAR === 0) {
+    const k = i % BEATS_PER_BAR;
+    if (k === 0) {
       measure = document.createElement('div');
       measure.className = 'measure';
       measure.innerHTML = '<div class="beats"></div><div class="counts" aria-hidden="true"></div>';
       scoreEl.appendChild(measure);
     }
+    if (k % group === 0) {
+      beatGroup = document.createElement('div');
+      countGroup = document.createElement('div');
+      beatGroup.className = countGroup.className = 'grp';
+      beatGroup.style.setProperty('--n', group);
+      countGroup.style.setProperty('--n', group);
+      measure.querySelector('.beats').appendChild(beatGroup);
+      measure.querySelector('.counts').appendChild(countGroup);
+    }
     const b = document.createElement('button');
     b.className = 'cell';
     b.dataset.i = i;
     b.tabIndex = i === focusIdx ? 0 : -1;
-    measure.querySelector('.beats').appendChild(b);
+    beatGroup.appendChild(b);
     cellEls.push(b);
 
     const c = document.createElement('div');
-    const beatNo = (i % BEATS_PER_BAR) + 1;
-    c.className = 'count' + (beatNo === 1 ? ' strong' : '');
-    c.textContent = beatNo;
-    measure.querySelector('.counts').appendChild(c);
+    c.className = 'count' + (k === 0 ? ' strong' : accent.includes(k) ? ' mid' : '');
+    c.textContent = k + 1;
+    countGroup.appendChild(c);
   }
+  layoutGrid();
 }
 
 function updateHint() {
@@ -568,21 +580,21 @@ function setMeter(m) {
   announce(`Nhịp ${m}, ${STEPS} ô`);
 }
 
+const TIMESIG_W = 40;
+const MIN_CELL = 44;
 function layoutGrid() {
   const w = $('gridWrap').clientWidth;
   if (!w) return;
   const present = document.body.classList.contains('present');
-  const max = present ? Math.min(innerHeight * 0.15, 140) : 64;
-  const min = 44;
-  const cellFor = (bpr) => {
-    const perBar = 18 + 6 * (BEATS_PER_BAR - 1);
-    return Math.floor((w - 40 - bpr * perBar) / (bpr * BEATS_PER_BAR));
-  };
-  let cell = cellFor(1);
-  for (const bpr of [4, 2]) {
-    if (cellFor(bpr) >= min) { cell = cellFor(bpr); break; }
-  }
-  scoreEl.style.setProperty('--cell', `${Math.max(32, Math.min(max, cell))}px`);
+  const groups = BEATS_PER_BAR / (METERS[METER].group || BEATS_PER_BAR);
+  const barChrome = 18 + 6 * (BEATS_PER_BAR - groups) + 12 * (groups - 1);
+  const cellFor = (bpr) => (w - TIMESIG_W - bpr * barChrome) / (bpr * BEATS_PER_BAR);
+  const bpr = [4, 2].find((n) => cellFor(n) >= MIN_CELL) || 1;
+  const maxH = present ? Math.min(innerHeight * 0.16, 150) : 72;
+  const height = Math.round(Math.max(MIN_CELL, Math.min(maxH, cellFor(bpr))));
+  scoreEl.style.setProperty('--bpr', bpr);
+  scoreEl.style.setProperty('--cell-h', `${height}px`);
+  scoreEl.querySelectorAll('.measure').forEach((m, k) => { m.style.gridColumn = String((k % bpr) + 2); });
 }
 if ('ResizeObserver' in window) new ResizeObserver(() => layoutGrid()).observe($('gridWrap'));
 
