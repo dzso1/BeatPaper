@@ -29,6 +29,9 @@
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="m16 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-ear" viewBox="0 0 24 24"><path d="M7 9.5a5 5 0 0 1 10 0c0 3-2.4 3.9-3.3 5.6-.7 1.4-.6 3.1-2.2 4.2A2.8 2.8 0 0 1 7.3 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 9.8a2 2 0 0 1 4 0c0 1.2-1 1.6-1.4 2.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="9" r="1.4" fill="currentColor"/><circle cx="15" cy="15" r="1.4" fill="currentColor"/><circle cx="15" cy="9" r="1.4" fill="currentColor"/><circle cx="9" cy="15" r="1.4" fill="currentColor"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 
@@ -61,6 +64,7 @@
         <dl>
           <dt><kbd>Space</kbd></dt><dd>Phát / dừng</dd>
           <dt><kbd>1</kbd>–<kbd>3</kbd></dt><dd>Tắt / bật từng bè</dd>
+          <dt><kbd>N</kbd></dt><dd>Nghe mẫu (Nghe – chép)</dd>
           <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Hoàn tác</dd>
           <dt><kbd>F</kbd></dt><dd>Trình chiếu</dd>
           <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Di chuyển giữa các ô</dd>
@@ -83,6 +87,10 @@
       <div>
         <h1>Lập trình nhịp</h1>
         <p class="page-sub" id="meterInfo">4 ô nhịp 4/4</p>
+        <div class="seg modes" role="group" aria-label="Chế độ">
+          <button data-seq="free" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-grid"/></svg>Tự soạn</button>
+          <button data-seq="dict" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-ear"/></svg>Nghe – chép</button>
+        </div>
       </div>
       <div class="field field--inline">
         <span class="label" id="meterLabel">Số chỉ nhịp</span>
@@ -115,13 +123,39 @@
 
     <div class="canvas board">
       <div class="board-tools">
-        <div class="presets-wrap">
+        <div class="presets-wrap" id="presetsWrap">
           <span class="label" id="presetsLabel">Mẫu nhịp</span>
           <div class="presets" id="presets" role="group" aria-labelledby="presetsLabel"></div>
+        </div>
+        <div class="dict" id="dict" hidden>
+          <div class="field field--inline dict-level">
+            <span class="label" id="levelLabel">Mức</span>
+            <div class="seg levels" id="levels" role="group" aria-labelledby="levelLabel">
+              <button data-level="0" aria-pressed="true" title="Một bè, mẫu lặp lại mỗi ô nhịp">Dễ</button>
+              <button data-level="1" aria-pressed="false" title="Hai bè, mẫu lặp lại mỗi 2 ô nhịp">Vừa</button>
+              <button data-level="2" aria-pressed="false" title="Ba bè, 4 ô nhịp không lặp">Khó</button>
+            </div>
+          </div>
+          <div class="btn-row dict-acts">
+            <button class="btn btn--primary" id="listenBtn" aria-pressed="false" title="Phím N">
+              <svg class="ico" aria-hidden="true"><use href="#i-ear"/></svg><span id="listenLabel">Nghe mẫu</span>
+            </button>
+            <button class="btn btn--secondary" id="checkBtn" disabled>
+              <svg class="ico" aria-hidden="true"><use href="#i-check"/></svg><span>Kiểm tra</span>
+            </button>
+            <button class="btn btn--ghost" id="answerBtn">
+              <svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg><span>Xem đáp án</span>
+            </button>
+            <button class="btn btn--ghost" id="newBtn">
+              <svg class="ico" aria-hidden="true"><use href="#i-dice"/></svg><span>Bài mới</span>
+            </button>
+          </div>
+          <p class="dict-score" id="dictScore"></p>
         </div>
       </div>
       <div class="canvas-head">
         <p class="hint" id="gridHint">Mỗi hàng là một bè. Chạm hoặc kéo qua các ô để thêm tiếng, chạm lại để bỏ. Bấm Phát để nghe.</p>
+        <p class="hint dict-msg" id="dictMsg" role="status" hidden></p>
         <p class="status" id="stepStatus">Ô nhịp 1 / 4 · đếm 1</p>
       </div>
       <div class="grid-wrap" id="gridWrap">
@@ -129,6 +163,20 @@
         <div class="playhead" id="playhead" aria-hidden="true"></div>
       </div>
     </div>
+
+    <section class="panel mixer-panel" aria-labelledby="mixTitle">
+      <header class="panel-head">
+        <div>
+          <h2 id="mixTitle">Âm thanh</h2>
+          <p class="panel-sub">Chọn bộ trống rồi vặn núm: kéo lên xuống, lăn chuột hoặc dùng phím mũi tên. Nhấp đúp để về mặc định.</p>
+        </div>
+      </header>
+      <div class="kit-row">
+        <div class="seg kits" id="kits" role="group" aria-label="Bộ trống"></div>
+        <p class="hint" id="kitDesc"></p>
+      </div>
+      <div class="mixer" id="mixer"></div>
+    </section>
 
     <section class="panel cam" aria-labelledby="camTitle">
       <header class="panel-head">

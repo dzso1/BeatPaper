@@ -86,21 +86,46 @@ const READINGS = [
 
 let ctx = null;
 let master = null;
+let fx = null;
+let verbSend = null;
 let noiseBuf = null;
+const curves = new Map();
+
+function impulse(sec, decay) {
+  const len = Math.floor(ctx.sampleRate * sec);
+  const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+  }
+  return buf;
+}
 
 function initAudio() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -10;
-    comp.ratio.value = 4;
+    comp.threshold.value = -8;
+    comp.knee.value = 4;
+    comp.ratio.value = 6;
+    comp.attack.value = 0.002;
+    comp.release.value = 0.12;
+    const makeup = ctx.createGain();
+    makeup.gain.value = 0.75;
     master = ctx.createGain();
-    master.gain.value = 0.9;
-    master.connect(comp).connect(ctx.destination);
+    master.connect(comp).connect(makeup).connect(drive(2, ctx.destination));
+    const room = ctx.createConvolver();
+    room.buffer = impulse(1.8, 3.2);
+    verbSend = ctx.createGain();
+    verbSend.connect(room).connect(master);
+    fx = ctx.createGain();
+    fx.connect(master);
+    fx.connect(verbSend);
 
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    applyMix();
   }
   if (ctx.state === 'suspended') ctx.resume();
   return ctx;
@@ -108,7 +133,7 @@ function initAudio() {
 
 function openBus() {
   const b = ctx.createGain();
-  b.connect(master);
+  b.connect(fx);
   return b;
 }
 function closeBus(b) {
@@ -131,58 +156,126 @@ function envelope(g, t, peak, decay) {
   g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
 }
 
-function kick(t, vel, out) {
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.type = 'sine';
-  o.frequency.setValueAtTime(150, t);
-  o.frequency.exponentialRampToValueAtTime(45, t + 0.13);
-  envelope(g, t, vel, 0.45);
-  o.connect(g).connect(out);
-  o.start(t);
-  o.stop(t + 0.5);
-
-  const c = ctx.createOscillator();
-  const cg = ctx.createGain();
-  c.type = 'triangle';
-  c.frequency.setValueAtTime(900, t);
-  c.frequency.exponentialRampToValueAtTime(200, t + 0.02);
-  envelope(cg, t, vel * 0.35, 0.03);
-  c.connect(cg).connect(out);
-  c.start(t);
-  c.stop(t + 0.05);
-}
-
-function hihat(t, vel, out) {
-  const hp = ctx.createBiquadFilter();
-  hp.type = 'highpass';
-  hp.frequency.value = 7000;
-  const pk = ctx.createBiquadFilter();
-  pk.type = 'peaking';
-  pk.frequency.value = 10000;
-  pk.gain.value = 6;
-  const g = ctx.createGain();
-  envelope(g, t, vel * 0.45, 0.07);
-  hp.connect(pk).connect(g).connect(out);
-  noise(t, 0.09, hp);
-}
-
-function clap(t, vel, out) {
-  const bp = ctx.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.frequency.value = 1200;
-  bp.Q.value = 0.9;
+function vca(t, peak, decay, out, attack = 0.002) {
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.0001, t);
-  [0, 0.011, 0.022].forEach((off) => {
-    g.gain.setValueAtTime(vel * 0.9, t + off);
-    g.gain.exponentialRampToValueAtTime(vel * 0.15, t + off + 0.009);
-  });
-  g.gain.setValueAtTime(vel * 0.7, t + 0.033);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
-  bp.connect(g).connect(out);
-  noise(t, 0.25, bp);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+  g.connect(out);
+  return g;
 }
+
+function osc(type, freq, t, dur, out, to = 0, glide = 0) {
+  const o = ctx.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + glide);
+  o.connect(out);
+  o.start(t);
+  o.stop(t + dur);
+}
+
+function filtered(type, freq, q, out) {
+  const f = ctx.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = Math.min(freq, ctx.sampleRate * 0.45);
+  f.Q.value = q;
+  f.connect(out);
+  return f;
+}
+
+function drive(amount, out) {
+  if (!curves.has(amount)) {
+    const c = new Float32Array(1024);
+    for (let i = 0; i < c.length; i++) c[i] = Math.tanh((i / 511.5 - 1) * amount) / Math.tanh(amount);
+    curves.set(amount, c);
+  }
+  const s = ctx.createWaveShaper();
+  s.curve = curves.get(amount);
+  s.connect(out);
+  return s;
+}
+
+function kick808(t, v, out, p) {
+  osc('sine', 165 * p, t, 0.9, vca(t, v, 0.75, drive(2.2, out)), 46 * p, 0.09);
+  noise(t, 0.012, filtered('highpass', 2500, 0.7, vca(t, v * 0.35, 0.012, out)));
+}
+
+function hat808(t, v, out, p) {
+  const bp = filtered('bandpass', 10000 * p, 0.8, filtered('highpass', 7000 * p, 0.7, vca(t, v * 1.7, 0.075, out)));
+  [2, 3, 4.16, 5.43, 6.79, 8.21].forEach((r) => osc('square', 40 * r * p, t, 0.1, bp));
+}
+
+function clap808(t, v, out, p) {
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  [0, 0.01, 0.021].forEach((off) => {
+    g.gain.setValueAtTime(v * 2.7, t + off);
+    g.gain.exponentialRampToValueAtTime(v * 0.3, t + off + 0.009);
+  });
+  g.gain.setValueAtTime(v * 2.2, t + 0.031);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+  g.connect(out);
+  noise(t, 0.3, filtered('bandpass', 1150 * p, 1.1, g));
+}
+
+function kickAco(t, v, out, p) {
+  osc('sine', 120 * p, t, 0.5, vca(t, v, 0.42, drive(1.6, out)), 50 * p, 0.06);
+  osc('triangle', 180 * p, t, 0.1, vca(t, v * 0.3, 0.06, out), 80 * p, 0.05);
+  noise(t, 0.012, filtered('bandpass', 3800, 1.2, vca(t, v * 0.55, 0.01, out)));
+}
+
+function hatAco(t, v, out, p) {
+  noise(t, 0.08, filtered('highpass', 7000 * p, 0.8, filtered('bandpass', 10500 * p, 0.6, vca(t, v * 1, 0.055, out))));
+}
+
+function snare(t, v, out, p) {
+  osc('triangle', 200 * p, t, 0.15, vca(t, v * 0.7, 0.11, out), 160 * p, 0.08);
+  osc('sine', 330 * p, t, 0.1, vca(t, v * 0.3, 0.06, out));
+  noise(t, 0.25, filtered('highpass', 1200, 0.7, filtered('bandpass', 3200 * p, 0.6, vca(t, v * 0.85, 0.2, out))));
+}
+
+function trongCai(t, v, out, p) {
+  osc('sine', 98 * p, t, 1.1, vca(t, v, 0.95, drive(1.4, out), 0.004), 64 * p, 0.3);
+  osc('sine', 157 * p, t, 0.4, vca(t, v * 0.35, 0.3, out), 105 * p, 0.25);
+  noise(t, 0.05, filtered('lowpass', 900, 0.8, vca(t, v * 0.5, 0.04, out)));
+}
+
+function mo(t, v, out, p) {
+  osc('sine', 760 * p, t, 0.2, vca(t, v * 0.8, 0.13, out), 700 * p, 0.12);
+  osc('sine', 1830 * p, t, 0.08, vca(t, v * 0.25, 0.05, out));
+  noise(t, 0.01, filtered('bandpass', 2500, 2, vca(t, v * 0.4, 0.008, out)));
+}
+
+function phach(t, v, out, p) {
+  osc('triangle', 2200 * p, t, 0.05, vca(t, v * 0.75, 0.03, out));
+  noise(t, 0.04, filtered('bandpass', 3400 * p, 3, vca(t, v * 1.8, 0.03, out)));
+  noise(t + 0.012, 0.03, filtered('bandpass', 2900 * p, 3, vca(t + 0.012, v * 0.9, 0.02, out)));
+}
+
+function trongTay(t, v, out, p) {
+  osc('sine', 190 * p, t, 0.4, vca(t, v, 0.32, drive(1.3, out)), 135 * p, 0.07);
+  osc('sine', 410 * p, t, 0.1, vca(t, v * 0.2, 0.06, out));
+  noise(t, 0.03, filtered('bandpass', 1500, 1, vca(t, v * 0.5, 0.025, out)));
+}
+
+function lucLac(t, v, out, p) {
+  noise(t, 0.16, filtered('bandpass', 6500 * p, 1.2, vca(t, v * 1.3, 0.11, out, 0.015)));
+  [5300, 7100, 8900].forEach((f, n) => osc('sine', f * p, t + n * 0.006, 0.2, vca(t + n * 0.006, v * 0.1, 0.16, out)));
+}
+
+function tamGiac(t, v, out, p) {
+  [[1250, 1], [3460, 0.5], [6280, 0.3], [8900, 0.15]].forEach(([f, a]) =>
+    osc('sine', f * p, t, 1.5, vca(t, v * 0.32 * a, 1.3 - a * 0.3, out)));
+}
+
+const KITS = {
+  phong: { name: 'Phòng thu', lanes: { R: ['Trống cái', kickAco], B: ['Chũm chọe', hatAco], Y: ['Trống lẫy', snare] } },
+  so: { name: 'Điện tử', lanes: { R: ['Trống 808', kick808], B: ['Hi-hat 808', hat808], Y: ['Vỗ tay', clap808] } },
+  dan: { name: 'Dân tộc', lanes: { R: ['Trống cái', trongCai], B: ['Mõ', mo], Y: ['Phách tre', phach] } },
+  lop: { name: 'Lớp học', lanes: { R: ['Trống tay', trongTay], B: ['Lục lạc', lucLac], Y: ['Tam giác', tamGiac] } },
+};
+const KIT_ORDER = ['phong', 'so', 'dan', 'lop'];
 
 function tone(midi, t, dur, vel, out) {
   const f = 440 * Math.pow(2, (midi - 69) / 12);
@@ -395,11 +488,20 @@ let STEPS = 16;
 let PRESETS = METERS[METER].presets;
 
 const LANES = ['R', 'B', 'Y'];
-const INSTRUMENTS = {
-  R: { name: 'Trống cái' },
-  B: { name: 'Chũm chọe' },
-  Y: { name: 'Vỗ tay' },
-};
+const INSTRUMENTS = Object.fromEntries(LANES.map((lane) => [lane, { name: KITS.phong.lanes[lane][0] }]));
+
+const mix = { kit: 'phong', vol: { R: 100, B: 100, Y: 100 }, tune: { R: 0, B: 0, Y: 0 }, master: 100, verb: 25 };
+try {
+  const saved = JSON.parse(localStorage.getItem('beatpaper-mix') || 'null');
+  if (saved) {
+    if (KITS[saved.kit]) mix.kit = saved.kit;
+    ['vol', 'tune'].forEach((k) => LANES.forEach((lane) => {
+      if (Number.isFinite(saved[k]?.[lane])) mix[k][lane] = saved[k][lane];
+    }));
+    ['master', 'verb'].forEach((k) => { if (Number.isFinite(saved[k])) mix[k] = saved[k]; });
+  }
+} catch (e) {}
+LANES.forEach((lane) => (INSTRUMENTS[lane].name = KITS[mix.kit].lanes[lane][0]));
 
 const ICONS = {
   R: '<circle cx="12" cy="12" r="9.5" fill="currentColor"/>',
@@ -491,7 +593,7 @@ function buildGrid(bpr) {
 }
 
 function updateHint() {
-  $('gridHint').classList.toggle('is-hidden', hasAnyNote());
+  $('gridHint').classList.toggle('is-hidden', dict.on || hasAnyNote());
 }
 
 function renderCells() {
@@ -499,6 +601,7 @@ function renderCells() {
     const on = state.tracks[lane][i];
     const v = on ? '1' : '0';
     el.classList.toggle('muted', state.muted[lane]);
+    el.classList.toggle('locked', laneLocked(lane));
     if (el.dataset.on === v) return;
     const first = el.dataset.on === undefined;
     el.dataset.on = v;
@@ -507,9 +610,14 @@ function renderCells() {
     el.setAttribute('aria-label', `${INSTRUMENTS[lane].name}, ${cellPlace(i)}`);
     if (!first) replay(el, 'pop');
   }));
-  scoreEl.querySelectorAll('.lane-head').forEach((h) => h.classList.toggle('muted', state.muted[h.dataset.lane]));
+  scoreEl.querySelectorAll('.lane-head').forEach((h) => {
+    h.classList.toggle('muted', state.muted[h.dataset.lane]);
+    h.classList.toggle('locked', laneLocked(h.dataset.lane));
+  });
   scoreEl.querySelectorAll('.lane-btn').forEach((b) => b.setAttribute('aria-pressed', state.muted[b.dataset.lane] ? 'true' : 'false'));
+  renderMarks();
   if (!stroke) updateHint();
+  if (dict.on) updateDictUI();
 }
 
 function toggleMute(lane) {
@@ -571,6 +679,12 @@ function applyMeter(m) {
 }
 
 function setMeter(m) {
+  if (dict.on) {
+    applyMeter(m);
+    newChallenge();
+    announce(`Nhịp ${m}, bài nghe mới`);
+    return;
+  }
   pushUndo();
   applyMeter(m);
   state.tracks = emptyTracks();
@@ -625,6 +739,7 @@ function undo() {
   if (s.meter !== METER) applyMeter(s.meter);
   state.tracks = copyTracks(s.tracks);
   state.preset = s.preset;
+  dict.checked = false;
   setBpm(s.bpm);
   layoutGrid();
   renderCells();
@@ -655,25 +770,28 @@ function clearAll() {
   pushUndo();
   state.tracks = emptyTracks();
   state.preset = -1;
+  dict.checked = false;
   renderCells();
   markPreset();
-  showToast(`Đã xoá hết ${LANES.length} bè`, 'Hoàn tác', undo);
+  showToast(dict.on ? 'Đã xoá bài chép' : `Đã xoá hết ${LANES.length} bè`, 'Hoàn tác', undo);
 }
 
 let stroke = null;
 let strokeSnap = null;
 
 function setCell(lane, i, value) {
-  if (state.tracks[lane][i] === value) return;
+  if (laneLocked(lane) || state.tracks[lane][i] === value) return;
   if (strokeSnap) { pushUndo(strokeSnap); strokeSnap = null; }
   state.tracks[lane][i] = value;
   state.preset = -1;
+  dict.checked = false;
   renderCells();
   markPreset();
   if (value && !state.playing && !state.muted[lane]) audition(lane);
 }
 
 function beginStroke(lane, i) {
+  if (laneLocked(lane)) return;
   strokeSnap = snapshot();
   stroke = { lane, value: !state.tracks[lane][i] };
   setCell(lane, i, stroke.value);
@@ -730,15 +848,15 @@ scoreEl.addEventListener('keydown', (e) => {
   setFocusCell(LANES[Math.max(0, Math.min(LANES.length - 1, nl))], Math.max(0, Math.min(STEPS - 1, ni)));
 });
 
-const VOICES = { R: kick, B: hihat, Y: clap };
-
 function playVoice(v, t, vel, out) {
-  if (VOICES[v]) VOICES[v](t, vel, out);
+  const level = vel * mix.vol[v] / 100;
+  if (level < 0.002) return;
+  KITS[mix.kit].lanes[v][1](t, level, out, Math.pow(2, mix.tune[v] / 12));
 }
 
 function audition(v) {
   if (!ensureAudio()) return;
-  playVoice(v, ctx.currentTime + 0.01, 0.9, master);
+  playVoice(v, ctx.currentTime + 0.01, 0.9, fx);
 }
 
 let nextStep = 0;
@@ -747,24 +865,49 @@ let queue = [];
 let ticker = null;
 let bus = null;
 let rafId = 0;
+let shownCount = -1;
+const play = { target: false, pre: 0, endAt: 0, pulse: null };
 
 function scheduler() {
-  while (nextTime < ctx.currentTime + SCHEDULE_AHEAD) {
+  while (nextTime < ctx.currentTime + SCHEDULE_AHEAD && !play.endAt) {
     const dur = 60 / state.bpm;
+    const every = METERS[METER].group || 1;
+    if (play.pre > 0) {
+      const k = BEATS_PER_BAR - play.pre;
+      if (k % every === 0) tick(nextTime, k === 0, bus);
+      queue.push({ step: -1, count: k, time: nextTime, dur });
+      play.pre--;
+      nextTime += dur;
+      continue;
+    }
+    const tracks = play.target ? dict.target : state.tracks;
     const beat = nextStep % BEATS_PER_BAR;
     const vel = beat === 0 ? 1 : METERS[METER].accent.includes(beat) ? 0.82 : 0.68;
     LANES.forEach((lane) => {
-      if (state.tracks[lane][nextStep] && !state.muted[lane]) playVoice(lane, nextTime, vel, bus);
+      if (tracks[lane][nextStep] && !state.muted[lane]) playVoice(lane, nextTime, vel, bus);
     });
+    if (play.target && beat % every === 0) tick(nextTime, beat === 0, play.pulse);
     queue.push({ step: nextStep, time: nextTime, dur });
     nextTime += dur;
     nextStep = (nextStep + 1) % STEPS;
+    if (play.target && nextStep === 0) play.endAt = nextTime;
   }
 }
 
-function start() {
+function start(target = false) {
   if (!ensureAudio()) return;
+  if (state.playing) stop(true);
   bus = openBus();
+  play.target = target;
+  play.pre = target ? BEATS_PER_BAR : 0;
+  play.endAt = 0;
+  play.pulse = null;
+  if (target) {
+    play.pulse = ctx.createGain();
+    play.pulse.gain.value = 0.45;
+    play.pulse.connect(bus);
+  }
+  shownCount = -1;
   nextStep = 0;
   nextTime = ctx.currentTime + 0.06;
   queue = [];
@@ -772,25 +915,28 @@ function start() {
   scheduler();
   ticker.start();
   state.playing = true;
-  $('playhead').classList.add('on');
   setPlayUI();
-  announce('Đang phát');
+  announce(target ? 'Đang phát mẫu' : 'Đang phát');
   cancelAnimationFrame(rafId);
   rafId = requestAnimationFrame(draw);
 }
 
-function stop() {
+function stop(quiet = false) {
   if (ticker) ticker.stop();
   closeBus(bus);
   bus = null;
+  const wasTarget = play.target;
   state.playing = false;
+  play.target = false;
+  play.pre = 0;
+  play.endAt = 0;
   queue = [];
   cancelAnimationFrame(rafId);
   setActive(-1);
   $('playhead').classList.remove('on');
   setStepStatus(0);
   setPlayUI();
-  announce('Đã dừng');
+  if (!quiet) announce(wasTarget ? 'Hết mẫu' : 'Đã dừng');
 }
 
 function setBpm(v) {
@@ -802,7 +948,7 @@ function setBpm(v) {
 }
 
 function setStepStatus(i) {
-  $('stepStatus').textContent = `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1} / ${BARS} · đếm ${(i % BEATS_PER_BAR) + 1}`;
+  $('stepStatus').textContent = `${play.target ? 'Mẫu · ' : ''}Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1} / ${BARS} · đếm ${(i % BEATS_PER_BAR) + 1}`;
 }
 
 let playheadX = -1;
@@ -830,25 +976,424 @@ function setActive(i) {
     const el = cellEls[lane][i];
     if (!el) return;
     el.classList.add('active');
-    if (state.tracks[lane][i] && !state.muted[lane]) replay(el, 'hit');
+    if (!play.target && state.tracks[lane][i] && !state.muted[lane]) replay(el, 'hit');
   });
   placePlayhead(i);
+  $('playhead').classList.add('on');
   setStepStatus(i);
 }
 
 function draw() {
   rafId = requestAnimationFrame(draw);
   const now = ctx.currentTime;
+  if (play.endAt && now >= play.endAt) { stop(); return; }
   while (queue.length > 1 && queue[1].time <= now) queue.shift();
   const cur = queue[0];
-  if (cur && cur.time <= now && cur.step !== lastStep) setActive(cur.step);
+  if (!cur || cur.time > now) return;
+  if (cur.step >= 0) {
+    if (cur.step !== lastStep) setActive(cur.step);
+  } else if (cur.count !== shownCount) {
+    shownCount = cur.count;
+    $('stepStatus').textContent = `Đếm vào · ${cur.count + 1}`;
+  }
 }
 
-$('playBtn').addEventListener('click', () => (state.playing ? stop() : start()));
+$('playBtn').addEventListener('click', () => (state.playing && !play.target ? stop() : start()));
 $('bpm').addEventListener('input', (e) => setBpm(+e.target.value));
 $('clearBtn').addEventListener('click', clearAll);
 $('undoBtn').addEventListener('click', undo);
 window.addEventListener('resize', () => { if (state.playing && lastStep >= 0) placePlayhead(lastStep); });
+
+const LEVELS = [
+  { name: 'Dễ', lanes: 1, bars: 1, bpm: 84 },
+  { name: 'Vừa', lanes: 2, bars: 2, bpm: 96 },
+  { name: 'Khó', lanes: 3, bars: 4, bpm: 104 },
+];
+const LANE_FEEL = {
+  R: { strong: 0.9, mid: 0.5, weak: 0.15 },
+  B: { strong: 0.35, mid: 0.45, weak: 0.6 },
+  Y: { strong: 0.2, mid: 0.65, weak: 0.35 },
+};
+const MARK_TEXT = { ok: ', đúng', bad: ', tô thừa', miss: ', còn thiếu' };
+
+const dict = { on: false, level: 0, target: null, lanes: [], checks: 0, checked: false, revealed: false, solved: false, saved: null };
+const dictScore = { solved: 0, stars: 0 };
+try {
+  const s = JSON.parse(localStorage.getItem('beatpaper-dict') || 'null');
+  if (s) { dictScore.solved = +s.solved || 0; dictScore.stars = +s.stars || 0; }
+} catch (e) {}
+
+const laneLocked = (lane) => dict.on && !dict.lanes.includes(lane);
+const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const listNames = (lanes) => lanes.map((lane) => INSTRUMENTS[lane].name).join(lanes.length > 2 ? ', ' : ' và ');
+
+function beatWeight(k) {
+  const m = METERS[METER];
+  if (k === 0) return 'strong';
+  return m.accent.includes(k) || (m.group && k % m.group === 0) ? 'mid' : 'weak';
+}
+
+function makeCycle(lane, len) {
+  const feel = LANE_FEEL[lane];
+  for (let tries = 0; tries < 60; tries++) {
+    const cycle = Array.from({ length: len }, (_, i) => Math.random() < feel[beatWeight(i % BEATS_PER_BAR)]);
+    const n = cycle.filter(Boolean).length;
+    if (n >= Math.max(1, Math.round(len * 0.25)) && n < len) return cycle;
+  }
+  return Array.from({ length: len }, (_, i) => i % BEATS_PER_BAR === 0);
+}
+
+function makeTarget() {
+  const lv = LEVELS[dict.level];
+  const bars = lv.bars === 1 && BEATS_PER_BAR < 4 ? 2 : lv.bars;
+  const lanes = lv.lanes >= LANES.length ? LANES.slice() : lv.lanes === 1 ? [pickOne(LANES)] : ['R', pickOne(['B', 'Y'])];
+  const sig = (t) => LANES.map((lane) => t[lane].map(Number).join('')).join('|');
+  let target = null;
+  for (let tries = 0; tries < 20; tries++) {
+    target = emptyTracks();
+    lanes.forEach((lane) => {
+      const cycle = makeCycle(lane, bars * BEATS_PER_BAR);
+      target[lane] = Array.from({ length: STEPS }, (_, i) => cycle[i % cycle.length]);
+    });
+    if (!dict.target || sig(target) !== sig(dict.target)) break;
+  }
+  return { target, lanes };
+}
+
+function dictIntro() {
+  const n = dict.lanes.length;
+  return `Bấm Nghe mẫu, đếm theo tiếng gõ phách rồi tô lại vào lưới những tiếng em nghe được. Bài này có ${n === 1 ? 'bè' : `${n} bè`} ${listNames(dict.lanes)}.`;
+}
+
+function setDictMsg(text, tone = '') {
+  const el = $('dictMsg');
+  el.textContent = text;
+  el.dataset.tone = tone;
+}
+
+function saveDictScore() {
+  try { localStorage.setItem('beatpaper-dict', JSON.stringify(dictScore)); } catch (e) {}
+}
+
+function updateDictUI() {
+  const over = dict.revealed || dict.solved;
+  $('checkBtn').disabled = over || !hasAnyNote();
+  $('answerBtn').disabled = over;
+  $('listenBtn').classList.toggle('btn--primary', !over);
+  $('newBtn').classList.toggle('btn--primary', over);
+  $('dictScore').innerHTML = `<b>${dictScore.solved}</b> bài đúng · <b>${dictScore.stars}</b> ★`;
+  document.querySelectorAll('[data-level]').forEach((b) =>
+    b.setAttribute('aria-pressed', +b.dataset.level === dict.level ? 'true' : 'false'));
+}
+
+function renderMarks() {
+  LANES.forEach((lane) => cellEls[lane].forEach((el, i) => {
+    const on = state.tracks[lane][i];
+    let mark = '';
+    if (dict.on && dict.target) {
+      const want = dict.target[lane][i];
+      if (on && dict.checked) mark = want ? 'ok' : 'bad';
+      else if (!on && want && dict.revealed) mark = 'miss';
+    }
+    if (mark) el.dataset.mark = mark;
+    else delete el.dataset.mark;
+    if (mark !== 'ok') el.classList.remove('win');
+    if (!on) {
+      const ghost = mark === 'miss';
+      if (ghost !== !!el.firstChild) el.innerHTML = ghost ? `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[lane]}</svg>` : '';
+    }
+    el.setAttribute('aria-label', `${INSTRUMENTS[lane].name}, ${cellPlace(i)}${MARK_TEXT[mark] || ''}`);
+  }));
+}
+
+function newChallenge() {
+  if (state.playing) stop(true);
+  const { target, lanes } = makeTarget();
+  Object.assign(dict, { target, lanes, checks: 0, checked: false, revealed: false, solved: false });
+  state.tracks = emptyTracks();
+  state.preset = -1;
+  undoStack.length = 0;
+  $('undoBtn').disabled = true;
+  const lv = LEVELS[dict.level];
+  setBpm(Math.round(lv.bpm * (METER.endsWith('/8') ? 1.5 : METER === '2/2' ? 0.75 : 1)));
+  layoutGrid();
+  renderCells();
+  setDictMsg(dictIntro());
+  replay($('dictMsg'), 'fade-in');
+}
+
+function dictResult() {
+  const r = { right: 0, wrong: 0, miss: 0 };
+  LANES.forEach((lane) => state.tracks[lane].forEach((on, i) => {
+    const want = dict.target[lane][i];
+    if (on && want) r.right++;
+    else if (on) r.wrong++;
+    else if (want) r.miss++;
+  }));
+  return r;
+}
+
+function celebrate() {
+  if (ensureAudio()) {
+    const t = ctx.currentTime + 0.05;
+    [72, 76, 79, 84].forEach((m, n) => tone(m, t + n * 0.08, 0.25, 0.7, fx));
+  }
+  LANES.forEach((lane) => cellEls[lane].forEach((el, i) => {
+    if (!state.tracks[lane][i]) return;
+    el.style.setProperty('--k', i);
+    replay(el, 'win');
+  }));
+}
+
+function checkDict() {
+  if (!dict.on || dict.revealed || dict.solved) return;
+  if (!hasAnyNote()) { setDictMsg('Lưới còn trống. Nghe mẫu rồi tô các tiếng em nghe được nhé.', 'warn'); return; }
+  if (state.playing) stop(true);
+  const r = dictResult();
+  dict.checks++;
+  dict.checked = true;
+  let msg;
+  if (!r.wrong && !r.miss) {
+    const stars = Math.max(1, 4 - dict.checks);
+    dict.solved = true;
+    dictScore.solved++;
+    dictScore.stars += stars;
+    saveDictScore();
+    msg = `Chính xác! Em chép đúng cả ${r.right} tiếng, được ${stars} ★.`;
+    setDictMsg(msg, 'good');
+    renderCells();
+    celebrate();
+  } else {
+    const parts = [`Đúng ${r.right}/${r.right + r.miss} tiếng`];
+    if (r.wrong) parts.push(`${r.wrong} ô tô thừa`);
+    if (r.miss) parts.push(`còn thiếu ${r.miss} tiếng`);
+    msg = `${parts.join(' · ')}. ${r.wrong ? 'Ô có dấu ✕ là chỗ tô thừa. ' : ''}Nghe lại mẫu rồi sửa nhé.`;
+    setDictMsg(msg, 'warn');
+    renderCells();
+  }
+  replay($('dictMsg'), 'fade-in');
+  announce(msg);
+}
+
+function revealDict() {
+  if (!dict.on || dict.revealed || dict.solved) return;
+  dict.revealed = true;
+  dict.checked = true;
+  renderCells();
+  setDictMsg('Ô viền nét đứt là tiếng em còn thiếu, ô có dấu ✕ là tô thừa. Nghe lại mẫu để so, rồi bấm Bài mới.');
+  replay($('dictMsg'), 'fade-in');
+  announce('Đã hiện đáp án');
+}
+
+function listenTarget() {
+  if (!dict.on) return;
+  if (state.playing && play.target) { stop(); return; }
+  start(true);
+}
+
+function setSeqMode(on) {
+  document.querySelectorAll('[data-seq]').forEach((b) =>
+    b.setAttribute('aria-pressed', (b.dataset.seq === 'dict') === on ? 'true' : 'false'));
+  if (on === dict.on) return;
+  if (state.playing) stop(true);
+  if (on) dict.saved = snapshot();
+  dict.on = on;
+  document.body.classList.toggle('dict', on);
+  $('presetsWrap').hidden = on;
+  $('dict').hidden = !on;
+  $('dictMsg').hidden = !on;
+  if (on) {
+    newChallenge();
+  } else {
+    const s = dict.saved;
+    dict.target = null;
+    dict.checked = false;
+    dict.revealed = false;
+    undoStack.length = 0;
+    $('undoBtn').disabled = true;
+    if (s && s.meter !== METER) applyMeter(s.meter);
+    state.tracks = s ? copyTracks(s.tracks) : emptyTracks();
+    state.preset = s ? s.preset : -1;
+    if (s) setBpm(s.bpm);
+    layoutGrid();
+    renderCells();
+    markPreset();
+  }
+  refreshThumbs();
+}
+
+document.querySelectorAll('[data-seq]').forEach((b) => b.addEventListener('click', () => {
+  if ((b.dataset.seq === 'dict') !== dict.on) go(b.dataset.seq === 'dict' ? 'nhip/nghe' : 'nhip');
+}));
+$('levels').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-level]');
+  if (!b || +b.dataset.level === dict.level) return;
+  dict.level = +b.dataset.level;
+  newChallenge();
+  announce(`Mức ${LEVELS[dict.level].name}, bài nghe mới`);
+});
+$('listenBtn').addEventListener('click', listenTarget);
+$('checkBtn').addEventListener('click', checkDict);
+$('answerBtn').addEventListener('click', revealDict);
+$('newBtn').addEventListener('click', () => { newChallenge(); announce('Bài nghe mới'); });
+
+const KNOB_SPEC = {
+  vol: { label: 'Âm lượng', min: 0, max: 150, step: 5, def: 100, fmt: (v) => `${v}%` },
+  tune: { label: 'Cao độ', min: -12, max: 12, step: 1, def: 0, fmt: (v) => (v > 0 ? `+${v}` : `${v}`) },
+  master: { label: 'Âm lượng', min: 0, max: 150, step: 5, def: 100, fmt: (v) => `${v}%` },
+  verb: { label: 'Độ vang', min: 0, max: 100, step: 5, def: 25, fmt: (v) => `${v}%` },
+};
+const knobValue = (kind, lane) => (lane ? mix[kind][lane] : mix[kind]);
+const knobName = (kind, lane) => `${KNOB_SPEC[kind].label} ${lane ? INSTRUMENTS[lane].name : 'tổng'}`;
+
+function applyMix() {
+  if (!ctx) return;
+  master.gain.setTargetAtTime(mix.master / 100, ctx.currentTime, 0.02);
+  verbSend.gain.setTargetAtTime(mix.verb / 200, ctx.currentTime, 0.02);
+}
+
+function saveMix() {
+  try { localStorage.setItem('beatpaper-mix', JSON.stringify(mix)); } catch (e) {}
+}
+
+function knobHtml(kind, lane = '') {
+  const s = KNOB_SPEC[kind];
+  return `<div class="knob-wrap">
+    <div class="knob" role="slider" tabindex="0" data-kind="${kind}" data-lane="${lane}" aria-label="${knobName(kind, lane)}" aria-valuemin="${s.min}" aria-valuemax="${s.max}">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="knob-track" cx="24" cy="24" r="21" pathLength="360" stroke-dasharray="270 360" transform="rotate(135 24 24)"/>
+        <circle class="knob-arc" cx="24" cy="24" r="21" pathLength="360"/>
+        <circle class="knob-cap" cx="24" cy="24" r="15"/>
+        <line class="knob-ptr" x1="24" y1="12" x2="24" y2="18"/>
+      </svg>
+    </div>
+    <span class="knob-label">${s.label}</span>
+    <output class="knob-val"></output>
+  </div>`;
+}
+
+function drawKnob(el) {
+  const kind = el.dataset.kind;
+  const s = KNOB_SPEC[kind];
+  const v = knobValue(kind, el.dataset.lane);
+  const f = (v - s.min) / (s.max - s.min);
+  const bipolar = s.min < 0;
+  const from = bipolar ? Math.min(f, 0.5) : 0;
+  const len = bipolar ? Math.abs(f - 0.5) : f;
+  const arc = el.querySelector('.knob-arc');
+  arc.setAttribute('stroke-dasharray', `${(len * 270).toFixed(1)} 360`);
+  arc.setAttribute('transform', `rotate(${135 + from * 270} 24 24)`);
+  el.querySelector('.knob-ptr').setAttribute('transform', `rotate(${-135 + f * 270} 24 24)`);
+  el.setAttribute('aria-valuenow', v);
+  el.setAttribute('aria-valuetext', s.fmt(v));
+  el.parentElement.querySelector('.knob-val').textContent = s.fmt(v);
+}
+
+let knobSoundAt = 0;
+function setKnob(el, raw) {
+  const kind = el.dataset.kind;
+  const lane = el.dataset.lane;
+  const s = KNOB_SPEC[kind];
+  const v = Math.max(s.min, Math.min(s.max, Math.round(raw / s.step) * s.step)) || 0;
+  if (v === knobValue(kind, lane)) return;
+  if (lane) mix[kind][lane] = v;
+  else mix[kind] = v;
+  drawKnob(el);
+  applyMix();
+  saveMix();
+  if (lane && !state.playing && performance.now() - knobSoundAt > 140) {
+    knobSoundAt = performance.now();
+    audition(lane);
+  }
+}
+
+function buildKits() {
+  $('kits').innerHTML = KIT_ORDER.map((k) =>
+    `<button data-kit="${k}" aria-pressed="${k === mix.kit}">${KITS[k].name}</button>`).join('');
+  $('kits').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-kit]');
+    if (b) setKit(b.dataset.kit);
+  });
+}
+
+function buildMixer() {
+  const strip = (lane) => `<div class="strip" data-lane="${lane}">
+      <div class="strip-head"><svg class="lane-shape" viewBox="0 0 24 24" aria-hidden="true">${ICONS[lane]}</svg><span class="strip-name">${INSTRUMENTS[lane].name}</span></div>
+      <div class="strip-knobs">${knobHtml('vol', lane)}${knobHtml('tune', lane)}</div>
+    </div>`;
+  $('mixer').innerHTML = LANES.map(strip).join('') + `<div class="strip strip--master">
+      <div class="strip-head"><svg class="ico" aria-hidden="true"><use href="#i-sound"/></svg><span class="strip-name">Tổng</span></div>
+      <div class="strip-knobs">${knobHtml('master')}${knobHtml('verb')}</div>
+    </div>`;
+  $('mixer').querySelectorAll('.knob').forEach(drawKnob);
+  $('kitDesc').textContent = LANES.map((lane) => INSTRUMENTS[lane].name).join(' · ');
+}
+
+function demoKit() {
+  if (state.playing || !ensureAudio()) return;
+  const t = ctx.currentTime + 0.03;
+  LANES.forEach((lane, n) => playVoice(lane, t + n * 0.24, 0.9, fx));
+}
+
+function setKit(k) {
+  if (k === mix.kit) { demoKit(); return; }
+  mix.kit = k;
+  saveMix();
+  LANES.forEach((lane) => (INSTRUMENTS[lane].name = KITS[k].lanes[lane][0]));
+  document.querySelectorAll('[data-kit]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.kit === k ? 'true' : 'false'));
+  buildMixer();
+  gridBpr = 0;
+  layoutGrid();
+  if (dict.on && !dict.checked && !dict.revealed && !dict.solved) setDictMsg(dictIntro());
+  demoKit();
+  announce(`Bộ trống ${KITS[k].name}: ${LANES.map((lane) => INSTRUMENTS[lane].name).join(', ')}`);
+}
+
+const mixerEl = $('mixer');
+let knobDrag = null;
+mixerEl.addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('.knob');
+  if (!el || e.button > 0) return;
+  e.preventDefault();
+  el.focus();
+  el.setPointerCapture(e.pointerId);
+  el.classList.add('turning');
+  knobDrag = { el, x: e.clientX, y: e.clientY, v: knobValue(el.dataset.kind, el.dataset.lane) };
+});
+mixerEl.addEventListener('pointermove', (e) => {
+  if (!knobDrag) return;
+  const s = KNOB_SPEC[knobDrag.el.dataset.kind];
+  const d = knobDrag.y - e.clientY + (e.clientX - knobDrag.x);
+  setKnob(knobDrag.el, knobDrag.v + (d / 160) * (s.max - s.min));
+});
+['pointerup', 'pointercancel'].forEach((t) => mixerEl.addEventListener(t, () => {
+  if (knobDrag) knobDrag.el.classList.remove('turning');
+  knobDrag = null;
+}));
+mixerEl.addEventListener('wheel', (e) => {
+  const el = e.target.closest('.knob');
+  if (!el) return;
+  e.preventDefault();
+  const s = KNOB_SPEC[el.dataset.kind];
+  setKnob(el, knobValue(el.dataset.kind, el.dataset.lane) + (e.deltaY < 0 ? s.step : -s.step));
+}, { passive: false });
+mixerEl.addEventListener('keydown', (e) => {
+  const el = e.target.closest('.knob');
+  if (!el) return;
+  const s = KNOB_SPEC[el.dataset.kind];
+  const v = knobValue(el.dataset.kind, el.dataset.lane);
+  const next = {
+    ArrowUp: v + s.step, ArrowRight: v + s.step, ArrowDown: v - s.step, ArrowLeft: v - s.step,
+    PageUp: v + s.step * 4, PageDown: v - s.step * 4, Home: s.min, End: s.max,
+  }[e.key];
+  if (next === undefined) return;
+  e.preventDefault();
+  setKnob(el, next);
+});
+mixerEl.addEventListener('dblclick', (e) => {
+  const el = e.target.closest('.knob');
+  if (el) setKnob(el, KNOB_SPEC[el.dataset.kind].def);
+});
 
 const video = $('video');
 const overlay = $('overlay');
@@ -967,12 +1512,13 @@ function setStripReady(ready, dots) {
 function writeFromCamera() {
   if (!stripReady) return;
   const strip = detected.slice(0, STEPS).map((v) => v || 'W');
-  const next = Object.fromEntries(LANES.map((lane) => [lane, strip.map((v) => v === lane)]));
+  const next = Object.fromEntries(LANES.map((lane) => [lane, strip.map((v) => v === lane && !laneLocked(lane))]));
   const changed = strip.map((_, i) => LANES.some((lane) => next[lane][i] !== state.tracks[lane][i]));
   if (!changed.some(Boolean)) { showToast('Lưới đã giống dải giấy.'); return; }
   pushUndo();
   state.tracks = next;
   state.preset = -1;
+  dict.checked = false;
   renderCells();
   markPreset();
   changed.forEach((c, i) => c && LANES.forEach((lane) => replay(cellEls[lane][i], 'cam-flash')));
@@ -1492,7 +2038,7 @@ function playNote(it) {
     dur += cur.dur;
   }
   const sec = Math.min(Math.max(dur * spe(), 0.3), 2.5);
-  tone(it.midi, ctx.currentTime + 0.01, sec, 1, master);
+  tone(it.midi, ctx.currentTime + 0.01, sec, 1, fx);
   if (!rd.playing) {
     setCurrent(it);
     clearTimeout(tapTimer);
@@ -1814,18 +2360,21 @@ function setTitle() {
   const r = rd.reading;
   document.title = (view === 'doc' && r
     ? `${readingTitle(r)} – Lớp ${r.grade}`
-    : VIEW_TITLES[view]) + ' · BeatPaper';
+    : view === 'nhip' && dict.on ? 'Nghe – chép nhịp' : VIEW_TITLES[view]) + ' · BeatPaper';
 }
 
 function setPlayUI() {
-  [['playIcon', 'playLabel', state.playing], ['rPlayIcon', 'rPlayLabel', rd.playing]].forEach(([icon, label, on]) => {
+  [['playIcon', 'playLabel', state.playing && !play.target], ['rPlayIcon', 'rPlayLabel', rd.playing]].forEach(([icon, label, on]) => {
     $(icon).innerHTML = on ? ICON_STOP : ICON_PLAY;
     $(label).textContent = on ? 'Dừng' : 'Phát';
   });
+  const listening = state.playing && play.target;
+  $('listenLabel').textContent = listening ? 'Dừng mẫu' : 'Nghe mẫu';
+  $('listenBtn').setAttribute('aria-pressed', listening ? 'true' : 'false');
 }
 
 function toggle() {
-  if (view === 'nhip') state.playing ? stop() : start();
+  if (view === 'nhip') state.playing && !play.target ? stop() : start();
   else if (view === 'doc') rd.playing ? rStop() : rStart();
 }
 
@@ -1854,6 +2403,7 @@ function route(path = location.hash.replace('#', '')) {
     window.scrollTo(0, 0);
     if (!document.startViewTransition) replay($(`view-${next}`), 'enter');
   }
+  if (next === 'nhip') setSeqMode(g === 'nghe');
   if (next === 'doc') {
     const grade = BOOKS.some((b) => b.grade === +g) ? +g : rd.grade;
     selectGrade(grade, +n);
@@ -1863,15 +2413,18 @@ function route(path = location.hash.replace('#', '')) {
   refreshThumbs();
 }
 
-document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
-  go(t.dataset.view === 'doc' && rd.reading ? `doc/${rd.reading.grade}/${rd.reading.no}` : t.dataset.view);
-}));
+const viewPath = (v) => {
+  if (v === 'doc' && rd.reading) return `doc/${rd.reading.grade}/${rd.reading.no}`;
+  if (v === 'nhip' && dict.on) return 'nhip/nghe';
+  return v;
+};
+document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => go(viewPath(t.dataset.view))));
 $('tab-nhip').parentElement.addEventListener('keydown', (e) => {
   const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
   if (!d) return;
   e.preventDefault();
   const next = VIEWS[(VIEWS.indexOf(view) + d + VIEWS.length) % VIEWS.length];
-  go(next);
+  go(viewPath(next));
   $(`tab-${next}`).focus();
 });
 document.addEventListener('click', (e) => {
@@ -1914,6 +2467,8 @@ document.addEventListener('keydown', (e) => {
     if (!e.repeat) toggle();
   } else if (view === 'nhip' && /^[1-3]$/.test(e.key)) {
     toggleMute(LANES[+e.key - 1]);
+  } else if (view === 'nhip' && dict.on && (e.key === 'n' || e.key === 'N')) {
+    listenTarget();
   } else if (e.key === 'f' || e.key === 'F') {
     setPresent(!document.body.classList.contains('present'));
   }
@@ -1953,6 +2508,8 @@ renderCells();
 buildGrades();
 buildLegend();
 buildBooks();
+buildKits();
+buildMixer();
 setThemeUI();
 try {
   const look = localStorage.getItem('beatpaper-look');
