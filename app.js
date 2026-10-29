@@ -327,7 +327,7 @@ function moveThumb(box, thumb) {
 }
 
 function setupThumbs() {
-  document.querySelectorAll('.seg, .instruments, .nav').forEach(attachThumb);
+  document.querySelectorAll('.seg, .nav').forEach(attachThumb);
 }
 
 function announce(msg) {
@@ -359,31 +359,32 @@ const BARS = 4;
 
 const METERS = {
   '2/4': { unit: 'nốt đen', accent: [], presets: [
-    { name: 'Mạnh – nhẹ', bpm: 96,  cells: 'RB RB RB RB' },
-    { name: 'Hành khúc',  bpm: 112, cells: 'RY RY RB RY' },
-    { name: 'Hỏi – đáp',  bpm: 100, cells: 'YY YW BB BW' },
+    { name: 'Mạnh – nhẹ', bpm: 96, R: 'x. x. x. x.', B: '.x .x .x .x' },
+    { name: 'Hành khúc', bpm: 112, R: 'x. x. x. x.', B: 'xx xx xx xx', Y: '.x .x .x .x' },
+    { name: 'Hỏi – đáp', bpm: 100, Y: 'xx x. .. ..', B: '.. .. xx x.' },
   ] },
   '3/4': { unit: 'nốt đen', accent: [], presets: [
-    { name: 'Mạnh – nhẹ – nhẹ', bpm: 104, cells: 'RBB RBB RBB RBB' },
-    { name: 'Điệu valse',       bpm: 132, cells: 'RYY RYY RYY RYW' },
-    { name: 'Hỏi – đáp',        bpm: 100, cells: 'RYY RWW BBB YWW' },
+    { name: 'Mạnh – nhẹ – nhẹ', bpm: 104, R: 'x.. x.. x.. x..', B: '.xx .xx .xx .xx' },
+    { name: 'Điệu valse', bpm: 132, R: 'x.. x.. x.. x..', Y: '.xx .xx .xx .x.' },
+    { name: 'Hỏi – đáp', bpm: 100, R: 'x.. x.. ... ...', B: '... ... xxx x..' },
   ] },
   '4/4': { unit: 'nốt đen', accent: [2], presets: [
-    { name: 'Mạnh – nhẹ', bpm: 96,  cells: 'RBYB RBYB RBYB RBYB' },
-    { name: 'Trống đội',  bpm: 120, cells: 'RWYW RRYW RWYW RRYY' },
-    { name: 'Hỏi – đáp',  bpm: 108, cells: 'YYYW BBBW YYYW RRRW' },
+    { name: 'Mạnh – nhẹ', bpm: 96, R: 'x... x... x... x...', B: '.x.x .x.x .x.x .x.x', Y: '..x. ..x. ..x. ..x.' },
+    { name: 'Nhịp rock', bpm: 110, R: 'x.x. x.x. x.x. x.xx', B: 'xxxx xxxx xxxx xxxx', Y: '.x.x .x.x .x.x .x.x' },
+    { name: 'Trống đội', bpm: 120, R: 'x... xx.. x... xx..', B: '.x.x .... .x.x ....', Y: '..x. ..x. ..x. ..xx' },
+    { name: 'Hỏi – đáp', bpm: 108, Y: 'xxx. .... xxx. ....', B: '.... xxx. .... ....', R: '.... .... .... xxx.' },
   ] },
   '2/2': { unit: 'nốt trắng', accent: [], presets: [
-    { name: 'Mạnh – nhẹ', bpm: 72, cells: 'RY RY RY RY' },
-    { name: 'Hành khúc',  bpm: 84, cells: 'RB RY RB RY' },
+    { name: 'Mạnh – nhẹ', bpm: 72, R: 'x. x. x. x.', Y: '.x .x .x .x' },
+    { name: 'Hành khúc', bpm: 84, R: 'x. x. x. x.', B: 'xx xx xx xx', Y: '.x .x .x .x' },
   ] },
   '3/8': { unit: 'nốt móc đơn', accent: [], presets: [
-    { name: 'Mạnh – nhẹ – nhẹ', bpm: 144, cells: 'RBB RBB RBB RBB' },
-    { name: 'Đung đưa',         bpm: 132, cells: 'RWY RWY RBY RWW' },
+    { name: 'Mạnh – nhẹ – nhẹ', bpm: 144, R: 'x.. x.. x.. x..', B: '.xx .xx .xx .xx' },
+    { name: 'Đung đưa', bpm: 132, R: 'x.. x.. x.. x..', B: '.x. .x. .x. .x.', Y: '..x ..x ..x ...' },
   ] },
   '6/8': { unit: 'nốt móc đơn', accent: [3], group: 3, presets: [
-    { name: 'Mạnh – nhẹ', bpm: 160, cells: 'RBBYBB RBBYBB RBBYBB RBBYBB' },
-    { name: 'Chèo thuyền', bpm: 144, cells: 'RWBYWB RWBYWB RWBYWB RRBYWW' },
+    { name: 'Mạnh – nhẹ', bpm: 160, R: 'x..... x..... x..... x.....', Y: '...x.. ...x.. ...x.. ...x..', B: '.xx.xx .xx.xx .xx.xx .xx.xx' },
+    { name: 'Chèo thuyền', bpm: 144, R: 'x..x.. x..x.. x..x.. x..x..', B: '.x..x. .x..x. .x..x. .x..x.', Y: '..x..x ..x..x ..x..x ......' },
   ] },
 };
 const METER_ORDER = ['2/4', '3/4', '4/4', '2/2', '3/8', '6/8'];
@@ -392,128 +393,128 @@ let BEATS_PER_BAR = 4;
 let STEPS = 16;
 let PRESETS = METERS[METER].presets;
 
+const LANES = ['R', 'B', 'Y'];
 const INSTRUMENTS = {
   R: { name: 'Trống cái' },
   B: { name: 'Chũm chọe' },
   Y: { name: 'Vỗ tay' },
-  W: { name: 'Lặng' },
 };
-const ORDER = ['R', 'B', 'Y', 'W'];
 
 const ICONS = {
   R: '<circle cx="12" cy="12" r="9.5" fill="currentColor"/>',
   B: '<rect x="5" y="5" width="14" height="14" rx="1.5" transform="rotate(45 12 12)" fill="currentColor"/>',
   Y: '<path d="M12 2.8 21.5 20H2.5z" fill="currentColor" style="stroke:var(--yellow-edge)" stroke-width="1.6" stroke-linejoin="round"/>',
-  W: '<rect x="4.5" y="4.5" width="15" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 2.5"/>',
 };
 
+const emptyTracks = () => Object.fromEntries(LANES.map((lane) => [lane, Array(STEPS).fill(false)]));
+const copyTracks = (tracks) => Object.fromEntries(LANES.map((lane) => [lane, tracks[lane].slice()]));
+const hasAnyNote = () => LANES.some((lane) => state.tracks[lane].some(Boolean));
+
 const state = {
-  cells: Array(STEPS).fill('W'),
-  brush: 'R',
+  tracks: emptyTracks(),
+  muted: { R: false, B: false, Y: false },
   bpm: 100,
   playing: false,
   preset: -1,
 };
 
 const scoreEl = $('score');
-let cellEls = [];
+let cellEls = { R: [], B: [], Y: [] };
+let gridBpr = 0;
 let lastStep = -1;
-let focusIdx = 0;
+let focus = { lane: 'R', i: 0 };
 
-function buildGrid() {
+const cellPlace = (i) => `ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}, đếm ${(i % BEATS_PER_BAR) + 1}`;
+
+function laneHead(lane, interactive) {
+  const name = INSTRUMENTS[lane].name;
+  const inner = `<svg class="lane-shape" viewBox="0 0 24 24" aria-hidden="true">${ICONS[lane]}</svg>
+    <span class="lane-name">${name}</span>`;
+  if (!interactive) return `<div class="lane-head" data-lane="${lane}" aria-hidden="true">${inner}</div>`;
+  return `<div class="lane-head" data-lane="${lane}">
+    <button class="lane-btn" data-lane="${lane}" aria-pressed="${state.muted[lane]}" title="Tắt / bật bè ${name} (phím ${LANES.indexOf(lane) + 1})">
+      ${inner}
+      <svg class="ico lane-on" aria-hidden="true"><use href="#i-sound"/></svg>
+      <svg class="ico lane-off" aria-hidden="true"><use href="#i-mute"/></svg>
+      <span class="sr-only">Tắt bè ${name}</span>
+    </button>
+  </div>`;
+}
+
+function buildGrid(bpr) {
+  gridBpr = bpr;
   scoreEl.innerHTML = '';
-  const ts = document.createElement('div');
-  ts.className = 'timesig';
-  ts.setAttribute('aria-hidden', 'true');
-  const [mn, md] = METER.split('/');
-  ts.innerHTML = `<span>${mn}</span><span>${md}</span>`;
-  scoreEl.appendChild(ts);
-
-  cellEls = [];
+  cellEls = { R: [], B: [], Y: [] };
   const group = METERS[METER].group || BEATS_PER_BAR;
   const accent = METERS[METER].accent;
-  let measure, beatGroup, countGroup;
-  for (let i = 0; i < STEPS; i++) {
-    const k = i % BEATS_PER_BAR;
-    if (k === 0) {
-      measure = document.createElement('div');
-      measure.className = 'measure';
-      measure.innerHTML = '<div class="beats"></div><div class="counts" aria-hidden="true"></div>';
-      scoreEl.appendChild(measure);
-    }
-    if (k % group === 0) {
-      beatGroup = document.createElement('div');
-      countGroup = document.createElement('div');
-      beatGroup.className = countGroup.className = 'grp';
-      beatGroup.style.setProperty('--n', group);
-      countGroup.style.setProperty('--n', group);
-      measure.querySelector('.beats').appendChild(beatGroup);
-      measure.querySelector('.counts').appendChild(countGroup);
-    }
-    const b = document.createElement('button');
-    b.className = 'cell';
-    b.dataset.i = i;
-    b.tabIndex = i === focusIdx ? 0 : -1;
-    beatGroup.appendChild(b);
-    cellEls.push(b);
-
-    const c = document.createElement('div');
-    c.className = 'count' + (k === 0 ? ' strong' : accent.includes(k) ? ' mid' : '');
-    c.textContent = k + 1;
-    countGroup.appendChild(c);
+  const [mn, md] = METER.split('/');
+  const systems = Math.ceil(BARS / bpr);
+  const col = (bar) => String((bar % bpr) + 3);
+  const html = [];
+  for (let s = 0; s < systems; s++) {
+    const bars = [];
+    for (let bar = s * bpr; bar < Math.min(BARS, (s + 1) * bpr); bar++) bars.push(bar);
+    LANES.forEach((lane, li) => {
+      html.push(laneHead(lane, s === 0).replace('class="lane-head"', 'class="lane-head" style="grid-column:1"'));
+      if (li === 0) {
+        html.push(`<div class="timesig" aria-hidden="true" style="grid-column:2;grid-row:span ${LANES.length}">${s === 0 ? `<span>${mn}</span><span>${md}</span>` : ''}</div>`);
+      }
+      bars.forEach((bar) => {
+        let cells = '';
+        for (let k = 0; k < BEATS_PER_BAR; k++) {
+          if (k % group === 0) cells += `${k ? '</div>' : ''}<div class="grp" style="--n:${group}">`;
+          const i = bar * BEATS_PER_BAR + k;
+          cells += `<button class="cell" data-lane="${lane}" data-i="${i}" tabindex="-1"></button>`;
+        }
+        cells += '</div>';
+        const cls = 'lane-bar' + (bar === BARS - 1 ? ' final' : '') + (li === LANES.length - 1 ? ' last-lane' : '');
+        html.push(`<div class="${cls}" style="grid-column:${col(bar)}">${cells}</div>`);
+      });
+    });
+    const gap = s < systems - 1 ? ' sys-gap' : '';
+    html.push(`<div class="counts-head${gap}" style="grid-column:1" aria-hidden="true"></div>`);
+    bars.forEach((bar) => {
+      let counts = '';
+      for (let k = 0; k < BEATS_PER_BAR; k++) {
+        if (k % group === 0) counts += `${k ? '</div>' : ''}<div class="grp" style="--n:${group}">`;
+        counts += `<div class="count${k === 0 ? ' strong' : accent.includes(k) ? ' mid' : ''}">${k + 1}</div>`;
+      }
+      counts += '</div>';
+      html.push(`<div class="counts-bar${gap}${bar === BARS - 1 ? ' final' : ''}" style="grid-column:${col(bar)}" aria-hidden="true">${counts}</div>`);
+    });
   }
-  layoutGrid();
+  scoreEl.innerHTML = html.join('');
+  scoreEl.querySelectorAll('.cell').forEach((b) => cellEls[b.dataset.lane][+b.dataset.i] = b);
+  const f = cellEls[focus.lane][focus.i] || cellEls.R[0];
+  f.tabIndex = 0;
 }
 
 function updateHint() {
-  $('gridHint').classList.toggle('is-hidden', state.cells.some((v) => v !== 'W'));
+  $('gridHint').classList.toggle('is-hidden', hasAnyNote());
 }
 
 function renderCells() {
-  cellEls.forEach((el, i) => {
-    const v = state.cells[i];
-    if (el.dataset.v === v) return;
-    const first = !el.dataset.v;
-    el.dataset.v = v;
-    el.innerHTML = v === 'W' ? '' : `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[v]}</svg>`;
-    el.setAttribute('aria-label', `${cellPlace(i)}: ${v === 'W' ? 'lặng' : INSTRUMENTS[v].name}`);
+  LANES.forEach((lane) => cellEls[lane].forEach((el, i) => {
+    const on = state.tracks[lane][i];
+    const v = on ? '1' : '0';
+    el.classList.toggle('muted', state.muted[lane]);
+    if (el.dataset.on === v) return;
+    const first = el.dataset.on === undefined;
+    el.dataset.on = v;
+    el.innerHTML = on ? `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[lane]}</svg>` : '';
+    el.setAttribute('aria-pressed', on ? 'true' : 'false');
+    el.setAttribute('aria-label', `${INSTRUMENTS[lane].name}, ${cellPlace(i)}`);
     if (!first) replay(el, 'pop');
-  });
+  }));
+  scoreEl.querySelectorAll('.lane-head').forEach((h) => h.classList.toggle('muted', state.muted[h.dataset.lane]));
+  scoreEl.querySelectorAll('.lane-btn').forEach((b) => b.setAttribute('aria-pressed', state.muted[b.dataset.lane] ? 'true' : 'false'));
   if (!stroke) updateHint();
 }
 
-function buildPalette() {
-  const pal = $('palette');
-  pal.innerHTML = ORDER.map((k, n) => {
-    const info = INSTRUMENTS[k];
-    return `<button class="inst" role="radio" data-v="${k}" aria-checked="false" title="${k === 'W' ? 'Tẩy về phách lặng' : info.name}">
-      <svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg>
-      <b>${info.name}</b>
-      <kbd aria-hidden="true">${n + 1}</kbd>
-    </button>`;
-  }).join('');
-  pal.addEventListener('click', (e) => {
-    const b = e.target.closest('.inst');
-    if (b) setBrush(b.dataset.v);
-  });
-  pal.addEventListener('keydown', (e) => {
-    const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-    if (!d) return;
-    e.preventDefault();
-    const k = ORDER[(ORDER.indexOf(state.brush) + d + ORDER.length) % ORDER.length];
-    setBrush(k);
-    pal.querySelector(`[data-v="${k}"]`).focus();
-  });
-  setBrush(state.brush);
-}
-
-function setBrush(k) {
-  state.brush = k;
-  $('palette').querySelectorAll('.inst').forEach((x) => {
-    const on = x.dataset.v === k;
-    x.setAttribute('aria-checked', on ? 'true' : 'false');
-    x.tabIndex = on ? 0 : -1;
-  });
+function toggleMute(lane) {
+  state.muted[lane] = !state.muted[lane];
+  renderCells();
+  announce(`${state.muted[lane] ? 'Đã tắt' : 'Đã bật'} bè ${INSTRUMENTS[lane].name}`);
 }
 
 function buildPresets() {
@@ -551,9 +552,9 @@ function applyMeter(m) {
   BEATS_PER_BAR = +m.split('/')[0];
   STEPS = BEATS_PER_BAR * BARS;
   PRESETS = METERS[m].presets;
-  focusIdx = 0;
+  focus = { lane: focus.lane, i: 0 };
   lastStep = -1;
-  buildGrid();
+  gridBpr = 0;
   buildPresets();
   document.querySelectorAll('[data-meter]').forEach((b) =>
     b.setAttribute('aria-pressed', b.dataset.meter === m ? 'true' : 'false'));
@@ -566,40 +567,50 @@ function applyMeter(m) {
   buildStripDownload();
   setBpm(state.bpm);
   setStepStatus(0);
-  layoutGrid();
 }
 
 function setMeter(m) {
   pushUndo();
   applyMeter(m);
-  state.cells = Array(STEPS).fill('W');
+  state.tracks = emptyTracks();
   state.preset = -1;
+  layoutGrid();
   renderCells();
   markPreset();
   showToast(`Đã đổi sang nhịp ${m}`, 'Hoàn tác', undo);
-  announce(`Nhịp ${m}, ${STEPS} ô`);
+  announce(`Nhịp ${m}, ${STEPS} ô mỗi bè`);
 }
 
-const TIMESIG_W = 40;
+const SIG_W = 32;
 const MIN_CELL = 44;
 function layoutGrid() {
+  const narrow = matchMedia('(max-width: 760px)').matches;
+  const headW = narrow ? 36 : 172;
+  scoreEl.style.setProperty('--head-w', `${headW}px`);
   const w = $('gridWrap').clientWidth;
-  if (!w) return;
-  const present = document.body.classList.contains('present');
-  const groups = BEATS_PER_BAR / (METERS[METER].group || BEATS_PER_BAR);
-  const barChrome = 18 + 6 * (BEATS_PER_BAR - groups) + 12 * (groups - 1);
-  const cellFor = (bpr) => (w - TIMESIG_W - bpr * barChrome) / (bpr * BEATS_PER_BAR);
-  const bpr = [4, 2].find((n) => cellFor(n) >= MIN_CELL) || 1;
-  const maxH = present ? Math.min(innerHeight * 0.16, 150) : 72;
-  const height = Math.round(Math.max(MIN_CELL, Math.min(maxH, cellFor(bpr))));
+  let bpr = gridBpr || 4;
+  let height = 48;
+  if (w) {
+    const present = document.body.classList.contains('present');
+    const groups = BEATS_PER_BAR / (METERS[METER].group || BEATS_PER_BAR);
+    const barChrome = 18 + 6 * (BEATS_PER_BAR - groups) + 12 * (groups - 1);
+    const cellFor = (n) => (w - headW - SIG_W - n * barChrome) / (n * BEATS_PER_BAR);
+    bpr = [4, 2].find((n) => cellFor(n) >= MIN_CELL) || 1;
+    const maxH = present ? Math.min(innerHeight * 0.11, 110) : 56;
+    height = Math.round(Math.max(MIN_CELL, Math.min(maxH, cellFor(bpr))));
+  }
   scoreEl.style.setProperty('--bpr', bpr);
   scoreEl.style.setProperty('--cell-h', `${height}px`);
-  scoreEl.querySelectorAll('.measure').forEach((m, k) => { m.style.gridColumn = String((k % bpr) + 2); });
+  if (bpr !== gridBpr || !scoreEl.childElementCount) {
+    buildGrid(bpr);
+    renderCells();
+    if (state.playing && lastStep >= 0) { const s = lastStep; lastStep = -1; setActive(s); }
+  }
 }
 if ('ResizeObserver' in window) new ResizeObserver(() => layoutGrid()).observe($('gridWrap'));
 
 const undoStack = [];
-const snapshot = () => ({ cells: state.cells.slice(), bpm: state.bpm, preset: state.preset, meter: METER });
+const snapshot = () => ({ tracks: copyTracks(state.tracks), bpm: state.bpm, preset: state.preset, meter: METER });
 
 function pushUndo(snap = snapshot()) {
   undoStack.push(snap);
@@ -611,9 +622,10 @@ function undo() {
   const s = undoStack.pop();
   if (!s) return;
   if (s.meter !== METER) applyMeter(s.meter);
-  state.cells = s.cells;
+  state.tracks = copyTracks(s.tracks);
   state.preset = s.preset;
   setBpm(s.bpm);
+  layoutGrid();
   renderCells();
   markPreset();
   $('undoBtn').disabled = !undoStack.length;
@@ -621,10 +633,15 @@ function undo() {
   announce('Đã hoàn tác');
 }
 
+const parseLane = (pattern) => {
+  const marks = (pattern || '').replace(/\s/g, '');
+  return Array.from({ length: STEPS }, (_, i) => marks[i] === 'x');
+};
+
 function loadPreset(n) {
   const p = PRESETS[n];
   pushUndo();
-  state.cells = p.cells.replace(/\s/g, '').split('');
+  state.tracks = Object.fromEntries(LANES.map((lane) => [lane, parseLane(p[lane])]));
   state.preset = n;
   setBpm(p.bpm);
   renderCells();
@@ -633,68 +650,83 @@ function loadPreset(n) {
 }
 
 function clearAll() {
-  if (state.cells.every((v) => v === 'W')) return;
+  if (!hasAnyNote()) return;
   pushUndo();
-  state.cells = Array(STEPS).fill('W');
+  state.tracks = emptyTracks();
   state.preset = -1;
   renderCells();
   markPreset();
-  showToast('Đã xoá hết 16 phách', 'Hoàn tác', undo);
+  showToast(`Đã xoá hết ${LANES.length} bè`, 'Hoàn tác', undo);
 }
 
 let stroke = null;
 let strokeSnap = null;
 
-function paintCell(i, v) {
-  if (state.cells[i] === v) return;
+function setCell(lane, i, value) {
+  if (state.tracks[lane][i] === value) return;
   if (strokeSnap) { pushUndo(strokeSnap); strokeSnap = null; }
-  state.cells[i] = v;
+  state.tracks[lane][i] = value;
   state.preset = -1;
   renderCells();
   markPreset();
-  if (v !== 'W' && !state.playing) audition(v);
+  if (value && !state.playing && !state.muted[lane]) audition(lane);
 }
 
-function beginStroke(i) {
+function beginStroke(lane, i) {
   strokeSnap = snapshot();
-  stroke = state.cells[i] === state.brush && state.brush !== 'W' ? 'W' : state.brush;
-  paintCell(i, stroke);
-  setFocusCell(i, false);
+  stroke = { lane, value: !state.tracks[lane][i] };
+  setCell(lane, i, stroke.value);
+  setFocusCell(lane, i, false);
+}
+
+function endStroke() {
+  if (!stroke) return;
+  stroke = null;
+  strokeSnap = null;
+  updateHint();
 }
 
 scoreEl.addEventListener('pointerdown', (e) => {
   const c = e.target.closest('.cell');
   if (!c || e.button > 0) return;
   e.preventDefault();
-  beginStroke(+c.dataset.i);
+  beginStroke(c.dataset.lane, +c.dataset.i);
 });
 window.addEventListener('pointermove', (e) => {
   if (!stroke) return;
   const c = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('.cell');
-  if (c) paintCell(+c.dataset.i, stroke);
+  if (c && c.dataset.lane === stroke.lane) setCell(stroke.lane, +c.dataset.i, stroke.value);
 });
-['pointerup', 'pointercancel'].forEach((t) => window.addEventListener(t, () => {
-  if (stroke) { stroke = null; strokeSnap = null; updateHint(); }
-}));
+['pointerup', 'pointercancel'].forEach((t) => window.addEventListener(t, endStroke));
 scoreEl.addEventListener('click', (e) => {
+  const mute = e.target.closest('.lane-btn');
+  if (mute) { toggleMute(mute.dataset.lane); return; }
   const c = e.target.closest('.cell');
-  if (c && e.detail === 0) { beginStroke(+c.dataset.i); stroke = null; strokeSnap = null; updateHint(); }
+  if (c && e.detail === 0) { beginStroke(c.dataset.lane, +c.dataset.i); endStroke(); }
 });
 
-function setFocusCell(i, move = true) {
-  cellEls[focusIdx].tabIndex = -1;
-  focusIdx = i;
-  cellEls[i].tabIndex = 0;
-  if (move) cellEls[i].focus();
+function setFocusCell(lane, i, move = true) {
+  const prev = cellEls[focus.lane][focus.i];
+  if (prev) prev.tabIndex = -1;
+  focus = { lane, i };
+  const el = cellEls[lane][i];
+  el.tabIndex = 0;
+  if (move) el.focus();
 }
 scoreEl.addEventListener('keydown', (e) => {
   const c = e.target.closest('.cell');
   if (!c) return;
   const i = +c.dataset.i;
-  const map = { ArrowRight: i + 1, ArrowLeft: i - 1, ArrowDown: i + BEATS_PER_BAR, ArrowUp: i - BEATS_PER_BAR, Home: 0, End: STEPS - 1 };
-  if (!(e.key in map)) return;
+  const li = LANES.indexOf(c.dataset.lane);
+  const moves = {
+    ArrowRight: [li, i + 1], ArrowLeft: [li, i - 1],
+    ArrowDown: [li + 1, i], ArrowUp: [li - 1, i],
+    Home: [li, 0], End: [li, STEPS - 1],
+  };
+  if (!(e.key in moves)) return;
   e.preventDefault();
-  setFocusCell(Math.max(0, Math.min(STEPS - 1, map[e.key])));
+  const [nl, ni] = moves[e.key];
+  setFocusCell(LANES[Math.max(0, Math.min(LANES.length - 1, nl))], Math.max(0, Math.min(STEPS - 1, ni)));
 });
 
 const VOICES = { R: kick, B: hihat, Y: clap };
@@ -720,7 +752,9 @@ function scheduler() {
     const dur = 60 / state.bpm;
     const beat = nextStep % BEATS_PER_BAR;
     const vel = beat === 0 ? 1 : METERS[METER].accent.includes(beat) ? 0.82 : 0.68;
-    playVoice(state.cells[nextStep], nextTime, vel, bus);
+    LANES.forEach((lane) => {
+      if (state.tracks[lane][nextStep] && !state.muted[lane]) playVoice(lane, nextTime, vel, bus);
+    });
     queue.push({ step: nextStep, time: nextTime, dur });
     nextTime += dur;
     nextStep = (nextStep + 1) % STEPS;
@@ -766,7 +800,6 @@ function setBpm(v) {
   $('tempoTerm').textContent = eighths ? 'Đếm theo nốt móc đơn' : tempoTerm(v);
 }
 
-const cellPlace = (i) => `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}, đếm ${(i % BEATS_PER_BAR) + 1}`;
 function setStepStatus(i) {
   $('stepStatus').textContent = `Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1} / ${BARS} · đếm ${(i % BEATS_PER_BAR) + 1}`;
 }
@@ -774,11 +807,13 @@ function setStepStatus(i) {
 let playheadX = -1;
 let playheadY = -1;
 function placePlayhead(i) {
+  const bottom = cellEls[LANES[LANES.length - 1]][i];
+  if (!bottom) return;
   const wrap = $('gridWrap').getBoundingClientRect();
-  const r = cellEls[i].getBoundingClientRect();
+  const r = bottom.getBoundingClientRect();
   const ph = $('playhead');
   const x = r.left - wrap.left;
-  const y = r.bottom - wrap.top + 4;
+  const y = r.bottom - wrap.top + 5;
   ph.style.transition = x < playheadX || y !== playheadY ? 'none' : '';
   ph.style.width = `${r.width}px`;
   ph.style.transform = `translate(${x}px, ${y}px)`;
@@ -787,12 +822,15 @@ function placePlayhead(i) {
 }
 
 function setActive(i) {
-  if (lastStep >= 0) cellEls[lastStep].classList.remove('active', 'hit');
+  if (lastStep >= 0) LANES.forEach((lane) => cellEls[lane][lastStep]?.classList.remove('active', 'hit'));
   lastStep = i;
   if (i < 0) return;
-  const el = cellEls[i];
-  el.classList.add('active');
-  if (state.cells[i] !== 'W') replay(el, 'hit');
+  LANES.forEach((lane) => {
+    const el = cellEls[lane][i];
+    if (!el) return;
+    el.classList.add('active');
+    if (state.tracks[lane][i] && !state.muted[lane]) replay(el, 'hit');
+  });
   placePlayhead(i);
   setStepStatus(i);
 }
@@ -927,16 +965,17 @@ function setStripReady(ready, dots) {
 
 function writeFromCamera() {
   if (!stripReady) return;
-  const next = detected.slice(0, STEPS).map((v) => v || 'W');
-  const changed = next.map((v, i) => v !== state.cells[i]);
+  const strip = detected.slice(0, STEPS).map((v) => v || 'W');
+  const next = Object.fromEntries(LANES.map((lane) => [lane, strip.map((v) => v === lane)]));
+  const changed = strip.map((_, i) => LANES.some((lane) => next[lane][i] !== state.tracks[lane][i]));
   if (!changed.some(Boolean)) { showToast('Lưới đã giống dải giấy.'); return; }
   pushUndo();
-  state.cells = next;
+  state.tracks = next;
   state.preset = -1;
   renderCells();
   markPreset();
-  changed.forEach((c, i) => c && replay(cellEls[i], 'cam-flash'));
-  const n = next.filter((v) => v !== 'W').length;
+  changed.forEach((c, i) => c && LANES.forEach((lane) => replay(cellEls[lane][i], 'cam-flash')));
+  const n = strip.filter((v) => v !== 'W').length;
   showToast(`Đã ghi ${n} phách từ dải giấy`, 'Hoàn tác', undo);
   announce(`Đã ghi ${n} phách từ dải giấy`);
 }
@@ -1087,9 +1126,12 @@ async function loadPhoto(file) {
   }
   const url = URL.createObjectURL(file);
   const img = new Image();
-  img.src = url;
   try {
-    await img.decode();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = url;
+    });
   } catch (e) {
     URL.revokeObjectURL(url);
     $('camErr').textContent = 'Không mở được ảnh này. Thử một ảnh JPG hoặc PNG khác.';
@@ -1869,8 +1911,8 @@ document.addEventListener('keydown', (e) => {
     if (isInteractive(e.target)) return;
     e.preventDefault();
     if (!e.repeat) toggle();
-  } else if (view === 'nhip' && /^[1-4]$/.test(e.key)) {
-    setBrush(ORDER[+e.key - 1]);
+  } else if (view === 'nhip' && /^[1-3]$/.test(e.key)) {
+    toggleMute(LANES[+e.key - 1]);
   } else if (e.key === 'f' || e.key === 'F') {
     setPresent(!document.body.classList.contains('present'));
   }
@@ -1904,8 +1946,8 @@ try {
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', setThemeUI);
 
 buildMeters();
-buildPalette();
 applyMeter(METER);
+layoutGrid();
 renderCells();
 buildGrades();
 buildLegend();
