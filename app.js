@@ -270,8 +270,8 @@ function tamGiac(t, v, out, p) {
 }
 
 const KITS = {
-  phong: { name: 'Dàn trống', lanes: { R: ['Trống cái', kickAco], B: ['Hi-hat', hatAco], Y: ['Trống lẫy', snare] } },
-  so: { name: 'Trống điện tử', lanes: { R: ['Trống cái', kick808], B: ['Hi-hat', hat808], Y: ['Vỗ tay', clap808] } },
+  phong: { name: 'Dàn trống', lanes: { R: ['Trống cái', kickAco], B: ['Chũm chọe', hatAco], Y: ['Trống lẫy', snare] } },
+  so: { name: 'Trống điện tử', lanes: { R: ['Trống cái', kick808], B: ['Chũm chọe', hat808], Y: ['Vỗ tay', clap808] } },
   dan: { name: 'Nhạc cụ dân tộc', lanes: { R: ['Trống cái', trongCai], B: ['Mõ', mo], Y: ['Thanh phách', phach] } },
   lop: { name: 'Bộ gõ học đường', lanes: { R: ['Trống nhỏ', trongTay], B: ['Tambourine', lucLac], Y: ['Triangle', tamGiac] } },
 };
