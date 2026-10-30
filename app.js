@@ -626,23 +626,71 @@ function toggleMute(lane) {
   announce(`${state.muted[lane] ? 'Đã tắt' : 'Đã bật'} tiếng ${INSTRUMENTS[lane].name}`);
 }
 
+function presetPreview(p) {
+  return LANES.map((lane) => `<span class="pv-row" data-lane="${lane}">${parseLane(p[lane]).map((on, i) =>
+    `<i class="${on ? 'on' : ''}${i && i % BEATS_PER_BAR === 0 ? ' bar' : ''}"></i>`).join('')}</span>`).join('');
+}
+
 function buildPresets() {
-  const box = $('presets');
-  box.innerHTML = '';
-  PRESETS.forEach((p, n) => {
-    const b = document.createElement('button');
-    b.className = 'chip';
-    b.textContent = p.name;
-    b.addEventListener('click', () => loadPreset(n));
-    box.appendChild(b);
-  });
+  $('presetMenu').innerHTML = PRESETS.map((p, n) => `<button class="menu-item" role="menuitemradio" aria-checked="false" data-preset="${n}" tabindex="-1">
+      <span class="mi-text"><span class="mi-name">${p.name}</span><span class="mi-sub">${p.bpm} phách/phút</span></span>
+      <span class="pv" aria-hidden="true">${presetPreview(p)}</span>
+    </button>`).join('');
   markPreset();
 }
 
 function markPreset() {
-  [...$('presets').children].forEach((b, n) =>
-    b.setAttribute('aria-pressed', n === state.preset ? 'true' : 'false'));
+  $('presetMenu').querySelectorAll('[data-preset]').forEach((b) =>
+    b.setAttribute('aria-checked', +b.dataset.preset === state.preset ? 'true' : 'false'));
+  const p = PRESETS[state.preset];
+  $('presetLabel').textContent = p ? `Mẫu: ${p.name}` : 'Tiết tấu mẫu';
 }
+
+function openMenu(btn, menu) {
+  menu.hidden = false;
+  btn.setAttribute('aria-expanded', 'true');
+  replay(menu, 'menu-in');
+  const items = [...menu.querySelectorAll('[role^="menuitem"]')];
+  (items.find((b) => b.getAttribute('aria-checked') === 'true') || items[0])?.focus();
+}
+
+function closeMenu(btn, menu, refocus = false) {
+  if (menu.hidden) return;
+  menu.hidden = true;
+  btn.setAttribute('aria-expanded', 'false');
+  if (refocus) btn.focus();
+}
+
+const presetBtn = $('presetBtn');
+const presetMenu = $('presetMenu');
+presetBtn.addEventListener('click', () => (presetMenu.hidden ? openMenu(presetBtn, presetMenu) : closeMenu(presetBtn, presetMenu)));
+presetBtn.addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowDown' || !presetMenu.hidden) return;
+  e.preventDefault();
+  openMenu(presetBtn, presetMenu);
+});
+presetMenu.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-preset]');
+  if (!b) return;
+  closeMenu(presetBtn, presetMenu, true);
+  loadPreset(+b.dataset.preset);
+});
+presetMenu.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' || e.key === 'Tab') {
+    if (e.key === 'Escape') e.preventDefault();
+    closeMenu(presetBtn, presetMenu, e.key === 'Escape');
+    return;
+  }
+  const items = [...presetMenu.querySelectorAll('[data-preset]')];
+  const i = items.indexOf(document.activeElement);
+  const next = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+  if (next === undefined) return;
+  e.preventDefault();
+  items[(next + items.length) % items.length].focus();
+});
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#presetsWrap')) closeMenu(presetBtn, presetMenu);
+});
 
 function buildMeters() {
   document.querySelectorAll('.meters').forEach((box) => {
@@ -945,7 +993,39 @@ function setBpm(v) {
   const eighths = METER.endsWith('/8');
   $('bpmOut').innerHTML = `<b>${v}</b> <small>phách/phút</small>`;
   $('tempoTerm').textContent = eighths ? 'Phách là nốt móc đơn' : tempoTerm(v);
+  syncStepper('bpm');
 }
+
+function syncStepper(id) {
+  const input = $(id);
+  document.querySelectorAll(`.step-btn[data-for="${id}"]`).forEach((b) => {
+    b.disabled = +b.dataset.step < 0 ? +input.value <= +input.min : +input.value >= +input.max;
+  });
+}
+
+function stepTempo(id, d) {
+  const input = $(id);
+  const v = Math.max(+input.min, Math.min(+input.max, +input.value + d));
+  if (v === +input.value) return;
+  if (id === 'bpm') setBpm(v);
+  else setRBpm(v);
+}
+
+let stepTimer = 0;
+const stopStep = () => { clearTimeout(stepTimer); clearInterval(stepTimer); stepTimer = 0; };
+document.querySelectorAll('.step-btn').forEach((b) => {
+  const nudge = () => stepTempo(b.dataset.for, +b.dataset.step);
+  b.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    e.preventDefault();
+    stopStep();
+    nudge();
+    stepTimer = setTimeout(() => { stepTimer = setInterval(nudge, 60); }, 380);
+  });
+  b.addEventListener('pointerleave', stopStep);
+  b.addEventListener('click', (e) => { if (e.detail === 0) nudge(); });
+});
+['pointerup', 'pointercancel'].forEach((t) => window.addEventListener(t, stopStep));
 
 function setStepStatus(i) {
   $('stepStatus').textContent = `${play.target ? 'Mẫu · ' : ''}Ô nhịp ${Math.floor(i / BEATS_PER_BAR) + 1}/${BARS} · phách ${(i % BEATS_PER_BAR) + 1}`;
@@ -1064,11 +1144,15 @@ function dictIntro() {
   return `Nghe tiết tấu mẫu rồi ghi lại vào lưới. Nhạc cụ: ${listNames(dict.lanes)}.`;
 }
 
+const TONE_ICONS = { '': '#i-ear', good: '#i-check', warn: '#i-alert', info: '#i-eye' };
+
 function setDictMsg(text, tone = '') {
-  const el = $('dictMsg');
-  el.textContent = text;
-  el.dataset.tone = tone;
+  $('dictText').textContent = text;
+  $('dictMsg').dataset.tone = tone;
+  $('dictIcon').setAttribute('href', TONE_ICONS[tone]);
 }
+
+const setEmphasis = (b, level) => ['primary', 'secondary', 'ghost'].forEach((k) => b.classList.toggle(`btn--${k}`, k === level));
 
 function saveDictScore() {
   try { localStorage.setItem('beatpaper-dict', JSON.stringify(dictScore)); } catch (e) {}
@@ -1076,10 +1160,13 @@ function saveDictScore() {
 
 function updateDictUI() {
   const over = dict.revealed || dict.solved;
-  $('checkBtn').disabled = over || !hasAnyNote();
+  const filled = hasAnyNote();
+  const stage = over ? 'done' : filled ? 'check' : 'listen';
+  $('checkBtn').disabled = over || !filled;
   $('answerBtn').disabled = over;
-  $('listenBtn').classList.toggle('btn--primary', !over);
-  $('newBtn').classList.toggle('btn--primary', over);
+  setEmphasis($('listenBtn'), stage === 'listen' ? 'primary' : 'secondary');
+  setEmphasis($('checkBtn'), stage === 'check' ? 'primary' : 'secondary');
+  setEmphasis($('newBtn'), stage === 'done' ? 'primary' : 'ghost');
   $('dictScore').innerHTML = `Hoàn thành <b>${dictScore.solved}</b> bài · <b>${dictScore.stars}</b> điểm`;
   document.querySelectorAll('[data-level]').forEach((b) =>
     b.setAttribute('aria-pressed', +b.dataset.level === dict.level ? 'true' : 'false'));
@@ -1179,7 +1266,7 @@ function revealDict() {
   dict.revealed = true;
   dict.checked = true;
   renderCells();
-  setDictMsg('Đáp án: ô viền nét đứt là nốt còn thiếu, ô đánh dấu ✕ là nốt ghi thừa.');
+  setDictMsg('Đáp án: ô viền nét đứt là nốt còn thiếu, ô đánh dấu ✕ là nốt ghi thừa.', 'info');
   replay($('dictMsg'), 'fade-in');
   announce('Đã hiện đáp án');
 }
@@ -1195,6 +1282,7 @@ function setSeqMode(on) {
     b.setAttribute('aria-pressed', (b.dataset.seq === 'dict') === on ? 'true' : 'false'));
   if (on === dict.on) return;
   if (state.playing) stop(true);
+  closeMenu(presetBtn, presetMenu);
   if (on) {
     dict.saved = snapshot();
     stopCamera();
@@ -1310,13 +1398,35 @@ function setKnob(el, raw) {
 }
 
 function buildKits() {
-  $('kits').innerHTML = KIT_ORDER.map((k) =>
-    `<button data-kit="${k}" aria-pressed="${k === mix.kit}">${KITS[k].name}</button>`).join('');
+  $('kits').innerHTML = KIT_ORDER.map((k) => `<button class="kit" role="radio" data-kit="${k}" aria-checked="${k === mix.kit}" tabindex="${k === mix.kit ? 0 : -1}">
+      <span class="kit-name">${KITS[k].name}</span>
+      <span class="kit-list">${LANES.map((lane) => `<span><svg class="lane-shape" data-lane="${lane}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[lane]}</svg>${KITS[k].lanes[lane][0]}</span>`).join('')}</span>
+    </button>`).join('');
   $('kits').addEventListener('click', (e) => {
     const b = e.target.closest('[data-kit]');
     if (b) setKit(b.dataset.kit);
   });
+  $('kits').addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    const k = KIT_ORDER[(KIT_ORDER.indexOf(mix.kit) + d + KIT_ORDER.length) % KIT_ORDER.length];
+    setKit(k);
+    $('kits').querySelector(`[data-kit="${k}"]`).focus();
+  });
 }
+
+function updateMixSummary() {
+  $('mixSummary').textContent = `${KITS[mix.kit].name} · ${LANES.map((lane) => INSTRUMENTS[lane].name).join(', ')}`;
+}
+
+function setMixOpen(open) {
+  $('mixToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+  $('mixBody').hidden = !open;
+  if (open) replay($('mixBody'), 'fade-in');
+  try { localStorage.setItem('beatpaper-mix-open', open ? '1' : '0'); } catch (e) {}
+}
+$('mixToggle').addEventListener('click', () => setMixOpen($('mixBody').hidden));
 
 function buildMixer() {
   const strip = (lane) => `<div class="strip" data-lane="${lane}">
@@ -1328,7 +1438,7 @@ function buildMixer() {
       <div class="strip-knobs">${knobHtml('master')}${knobHtml('verb')}</div>
     </div>`;
   $('mixer').querySelectorAll('.knob').forEach(drawKnob);
-  $('kitDesc').textContent = LANES.map((lane) => INSTRUMENTS[lane].name).join(' · ');
+  updateMixSummary();
 }
 
 function demoKit() {
@@ -1342,7 +1452,10 @@ function setKit(k) {
   mix.kit = k;
   saveMix();
   LANES.forEach((lane) => (INSTRUMENTS[lane].name = KITS[k].lanes[lane][0]));
-  document.querySelectorAll('[data-kit]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.kit === k ? 'true' : 'false'));
+  document.querySelectorAll('[data-kit]').forEach((b) => {
+    b.setAttribute('aria-checked', b.dataset.kit === k ? 'true' : 'false');
+    b.tabIndex = b.dataset.kit === k ? 0 : -1;
+  });
   buildMixer();
   gridBpr = 0;
   layoutGrid();
@@ -1583,6 +1696,7 @@ function stopCamera() {
   $('camHint').textContent = 'Bật camera hoặc tải ảnh lên để bắt đầu.';
   $('camEmpty').hidden = false;
   $('camBtnLabel').textContent = 'Bật camera';
+  $('camBtn').setAttribute('aria-pressed', 'false');
   $('camStatus').textContent = 'Camera đang tắt';
 }
 
@@ -1616,6 +1730,7 @@ async function toggleCamera() {
     work.width = workW; work.height = workH;
     $('camEmpty').hidden = true;
     $('camBtnLabel').textContent = 'Tắt camera';
+    $('camBtn').setAttribute('aria-pressed', 'true');
     $('camStatus').textContent = 'Đang quét';
     setStripReady(false, 0);
     camTimer = setInterval(scanFrame, SCAN_MS);
@@ -2226,6 +2341,7 @@ function setRBpm(v) {
   $('rTempoTerm').textContent = rd.mi.d === 8
     ? `1 phách = ${rd.mi.beatLen === 3 ? 'nốt đen chấm dôi' : 'nốt móc đơn'}`
     : `Sách ghi: ${rd.reading ? rd.reading.tempo : tempoTerm(v)}`;
+  syncStepper('rBpm');
 }
 
 const spe = () => 60 / (rd.bpm * rd.mi.beatLen);
@@ -2327,7 +2443,7 @@ document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('clic
 document.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => {
   const k = b.dataset.opt;
   rOpt[k] = !rOpt[k];
-  b.setAttribute('aria-pressed', rOpt[k] ? 'true' : 'false');
+  b.setAttribute('aria-checked', rOpt[k] ? 'true' : 'false');
 }));
 
 function buildLegend() {
@@ -2350,7 +2466,7 @@ function buildBooks() {
       </div>
       <div class="acts">
         ${n ? `<a class="btn btn--secondary" href="#doc/${b.grade}"><svg class="ico" aria-hidden="true"><use href="#i-note"/></svg>Luyện đọc nhạc</a>` : ''}
-        <a class="btn btn--ghost" href="${b.url}" target="_blank" rel="noopener">Mở sách điện tử<svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a>
+        <a class="link" href="${b.url}" target="_blank" rel="noopener">Mở sách điện tử<svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a>
       </div>
     </li>`;
   }).join('');
@@ -2371,6 +2487,8 @@ function setPlayUI() {
     $(icon).innerHTML = on ? ICON_STOP : ICON_PLAY;
     $(label).textContent = on ? 'Dừng' : 'Phát';
   });
+  if (dict.on && !(state.playing && !play.target)) $('playLabel').textContent = 'Phát bài ghi';
+  $('playBtn').classList.toggle('play--quiet', dict.on);
   const listening = state.playing && play.target;
   $('listenLabel').textContent = listening ? 'Dừng mẫu' : 'Nghe mẫu';
   $('listenBtn').setAttribute('aria-pressed', listening ? 'true' : 'false');
@@ -2513,6 +2631,7 @@ buildLegend();
 buildBooks();
 buildKits();
 buildMixer();
+try { setMixOpen(localStorage.getItem('beatpaper-mix-open') === '1'); } catch (e) { setMixOpen(false); }
 setThemeUI();
 try {
   const look = localStorage.getItem('beatpaper-look');
