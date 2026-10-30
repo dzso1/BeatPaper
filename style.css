@@ -112,15 +112,13 @@ output, .status, .count, .tempo-out output, .seg--num button { font-variant-nume
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; flex: none; border-radius: var(--r-sm); }
-.brand-logo { display: block; width: 180px; height: auto; }
-.brand-logo--dark { display: none; }
-:root[data-theme="dark"] .brand-logo--light { display: none; }
-:root[data-theme="dark"] .brand-logo--dark { display: block; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .brand-logo--light { display: none; }
-  :root:not([data-theme="light"]) .brand-logo--dark { display: block; }
-}
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: var(--display); font-weight: 700; font-size: 21px; letter-spacing: -0.01em; font-variation-settings: "opsz" 40; }
+.logo { width: 40px; height: 22px; overflow: visible; }
+.lg-strip { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.lg-hole { fill: var(--line-strong); }
+.lg-r { fill: var(--red); } .lg-b { fill: var(--blue); }
+.lg-y { fill: var(--yellow); stroke: var(--yellow-edge); stroke-width: 1; stroke-linejoin: round; }
+.lg-r, .lg-b, .lg-y { transform-box: fill-box; transform-origin: center; }
 
 .nav { display: flex; gap: 2px; }
 .tab {
@@ -708,6 +706,11 @@ body.present .lane-shape { width: clamp(18px, 2.6vh, 26px); height: clamp(18px, 
 }
 .disclosure:hover { background: var(--sunk); }
 .disclosure-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.brand:hover .lg-r { animation: lg-beat .36s var(--ease); }
+.brand:hover .lg-b { animation: lg-beat .36s var(--ease) .09s; }
+.brand:hover .lg-y { animation: lg-beat .36s var(--ease) .18s; }
+@keyframes lg-beat { 40% { transform: translateY(-2.5px) scale(1.15); } }
+
 .disclosure-title { font-size: var(--t-lg); font-weight: 700; letter-spacing: -0.015em; }
 .disclosure-sub { font-size: 14px; color: var(--ink-3); }
 .disclosure .chev { width: 20px; height: 20px; color: var(--ink-2); transition: transform var(--d-med) var(--ease); }
@@ -911,6 +914,7 @@ body[data-view="sgk"] { --accent: var(--yellow); --accent-ink: var(--yellow-edge
 
 @media (max-width: 760px) {
   .page-head h1 { font-size: 27px; }
+  .brand { font-size: 19px; }
   .howto { grid-template-columns: minmax(0, 1fr); }
   .howto li { padding: 10px var(--s-3); font-size: 13px; }
   .howto li + li { border-left: none; border-top: 1.5px dashed var(--line-strong); }
