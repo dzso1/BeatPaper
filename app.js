@@ -1229,6 +1229,37 @@ function celebrate() {
     el.style.setProperty('--k', i);
     replay(el, 'win');
   }));
+  burst();
+}
+
+function burst() {
+  if (reduceMotion() || !document.body.animate) return;
+  const wrap = $('gridWrap');
+  const box = wrap.getBoundingClientRect();
+  const layer = document.createElement('div');
+  layer.className = 'burst';
+  layer.setAttribute('aria-hidden', 'true');
+  wrap.appendChild(layer);
+  const cx = box.width / 2;
+  const cy = Math.min(box.height / 2, 120);
+  for (let n = 0; n < 26; n++) {
+    const lane = LANES[n % LANES.length];
+    const p = document.createElement('i');
+    p.dataset.lane = lane;
+    p.innerHTML = `<svg viewBox="0 0 24 24">${ICONS[lane]}</svg>`;
+    layer.appendChild(p);
+    const a = (n / 26) * Math.PI * 2 + Math.random() * 0.4;
+    const d = 90 + Math.random() * Math.min(box.width * 0.35, 260);
+    const x = Math.cos(a) * d;
+    const y = Math.sin(a) * d * 0.6 - 30;
+    const r = (Math.random() - 0.5) * 540;
+    p.animate([
+      { transform: `translate(${cx}px, ${cy}px) scale(.3) rotate(0deg)`, opacity: 1 },
+      { transform: `translate(${cx + x}px, ${cy + y}px) scale(1) rotate(${r * 0.7}deg)`, opacity: 1, offset: 0.55 },
+      { transform: `translate(${cx + x * 1.1}px, ${cy + y + 60}px) scale(.8) rotate(${r}deg)`, opacity: 0 },
+    ], { duration: 900 + Math.random() * 300, easing: 'cubic-bezier(.2, .7, .3, 1)', fill: 'forwards' });
+  }
+  setTimeout(() => layer.remove(), 1400);
 }
 
 function checkDict() {
@@ -1256,6 +1287,7 @@ function checkDict() {
     msg = `${parts.join(' · ')}.${r.wrong ? ' Ô đánh dấu ✕ là nốt ghi thừa.' : ''}`;
     setDictMsg(msg, 'warn');
     renderCells();
+    scoreEl.querySelectorAll('.cell[data-mark="bad"]').forEach((el) => replay(el, 'nudge'));
   }
   replay($('dictMsg'), 'fade-in');
   announce(msg);
@@ -1400,7 +1432,7 @@ function setKnob(el, raw) {
 function buildKits() {
   $('kits').innerHTML = KIT_ORDER.map((k) => `<button class="kit" role="radio" data-kit="${k}" aria-checked="${k === mix.kit}" tabindex="${k === mix.kit ? 0 : -1}">
       <span class="kit-name">${KITS[k].name}</span>
-      <span class="kit-list">${LANES.map((lane) => `<span><svg class="lane-shape" data-lane="${lane}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[lane]}</svg>${KITS[k].lanes[lane][0]}</span>`).join('')}</span>
+      <span class="kit-list">${LANES.map((lane, n) => `<span><svg class="lane-shape" data-lane="${lane}" style="--n:${n}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[lane]}</svg>${KITS[k].lanes[lane][0]}</span>`).join('')}</span>
     </button>`).join('');
   $('kits').addEventListener('click', (e) => {
     const b = e.target.closest('[data-kit]');
@@ -2265,7 +2297,7 @@ async function renderStaff() {
   rd.bars.forEach((b) => b.items.forEach((it) => { it.staffEls = []; }));
   if (!window.ABCJS) {
     box.innerHTML = '';
-    msg.textContent = 'Đang tải khuông nhạc…';
+    msg.innerHTML = '<span class="loader" aria-hidden="true"><i data-lane="R"></i><i data-lane="B"></i><i data-lane="Y"></i></span>Đang tải khuông nhạc…';
     msg.hidden = false;
     try {
       await loadAbc();
@@ -2459,7 +2491,7 @@ function buildBooks() {
   $('books').innerHTML = BOOKS.map((b) => {
     const n = readingsOf(b.grade).length;
     return `<li class="book">
-      <span class="big" aria-hidden="true">${b.grade}</span>
+      <span class="cover" data-g="${b.grade}" aria-hidden="true"><i></i><b>${b.grade}</b></span>
       <div>
         <div class="name">Âm nhạc ${b.grade}</div>
         <div class="cnt">${n ? `${n} bài đọc nhạc trong ứng dụng` : 'Chưa có bài đọc nhạc trong ứng dụng'}</div>
@@ -2514,6 +2546,7 @@ function route(path = location.hash.replace('#', '')) {
   if (next !== 'nhip') stopCamera();
   const changed = view !== next;
   view = next;
+  document.body.dataset.view = next;
   document.querySelectorAll('.view').forEach((s) => (s.hidden = s.id !== `view-${next}`));
   document.querySelectorAll('.tab').forEach((t) => {
     const on = t.dataset.view === next;

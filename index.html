@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F5F3EE">
+<meta name="theme-color" content="#F3EFE5">
 <title>Soạn tiết tấu · BeatPaper</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -41,9 +41,12 @@
 
 <header class="appbar">
   <a class="brand" href="#nhip" aria-label="BeatPaper, về Soạn tiết tấu">
-    <svg class="logo" viewBox="0 0 92 16" aria-hidden="true">
-      <circle class="lg-r" cx="7" cy="8" r="5"/><rect class="lg-b" x="14" y="3.5" width="9" height="9" rx="1" transform="rotate(45 18.5 8)"/><path class="lg-y" d="M32 2.5 37.5 13h-11z"/><rect class="lg-w" x="40.5" y="3.5" width="9" height="9" rx="1.5"/>
-      <circle class="lg-r" cx="61" cy="8" r="5"/><rect class="lg-b" x="68" y="3.5" width="9" height="9" rx="1" transform="rotate(45 72.5 8)"/><path class="lg-y" d="M86 2.5 91.5 13h-11z"/>
+    <svg class="logo" viewBox="0 0 44 24" aria-hidden="true">
+      <rect class="lg-strip" x="1" y="3" width="42" height="18" rx="3.5"/>
+      <circle class="lg-hole" cx="5" cy="7" r=".9"/><circle class="lg-hole" cx="5" cy="17" r=".9"/><circle class="lg-hole" cx="39" cy="7" r=".9"/><circle class="lg-hole" cx="39" cy="17" r=".9"/>
+      <circle class="lg-r" cx="13" cy="12" r="4.2"/>
+      <path class="lg-b" d="M22 7.1 26.9 12 22 16.9 17.1 12z"/>
+      <path class="lg-y" d="M31 7.6 35.2 15.6h-8.4z"/>
     </svg>
     <span>BeatPaper</span>
   </a>
@@ -168,7 +171,31 @@
         <p class="dict-score" id="dictScore"></p>
       </div>
       <div class="canvas-head">
-        <p class="hint" id="gridHint">Mỗi hàng là một nhạc cụ, mỗi ô là một phách. Chạm vào ô để ghi nốt, chạm lần nữa để xoá; có thể kéo qua nhiều ô.</p>
+        <ol class="howto" id="gridHint" aria-label="Cách dùng lưới">
+          <li>
+            <svg class="howto-art" viewBox="0 0 64 40" aria-hidden="true">
+              <rect class="ha-cell" x="4" y="8" width="16" height="16" rx="3.5"/><rect class="ha-cell ha-on" x="24" y="8" width="16" height="16" rx="3.5"/><rect class="ha-cell" x="44" y="8" width="16" height="16" rx="3.5"/>
+              <circle class="ha-r" cx="32" cy="16" r="4.6"/>
+              <path class="ha-hand" d="M36 21.5v8.2l2.4-2.1 1.9 4.3 2-.9-1.9-4.2 3.2-.2z"/>
+            </svg>
+            <span><b>Chạm vào ô</b> để ghi nốt. Mỗi hàng là một nhạc cụ, mỗi ô là một phách.</span>
+          </li>
+          <li>
+            <svg class="howto-art" viewBox="0 0 64 40" aria-hidden="true">
+              <circle class="ha-play" cx="22" cy="20" r="12"/><path class="ha-tri" d="M18.5 14v12l9.5-6z"/>
+              <path class="ha-wave" d="M40 14a9 9 0 0 1 0 12M46 10a15 15 0 0 1 0 20"/>
+            </svg>
+            <span><b>Bấm Phát</b> để nghe. Tiết tấu lặp lại cho đến khi dừng.</span>
+          </li>
+          <li>
+            <svg class="howto-art" viewBox="0 0 64 40" aria-hidden="true">
+              <rect class="ha-paper" x="6" y="13" width="52" height="14" rx="2"/>
+              <circle class="ha-r" cx="14" cy="20" r="3.4"/><rect class="ha-b" x="21.4" y="16.4" width="5.2" height="5.2" rx=".6" transform="rotate(45 24 20)"/><path class="ha-y" d="M34 16.6l3.2 6h-6.4z"/><circle class="ha-r" cx="44" cy="20" r="3.4"/><rect class="ha-dot" x="49" y="17" width="5" height="6" rx="1"/>
+              <path class="ha-frame" d="M3 9V5h5M61 9V5h-5M3 31v4h5M61 31v4h-5"/>
+            </svg>
+            <span><b>Hoặc tô trên giấy</b> rồi quét bằng camera ở phần Quét dải giấy.</span>
+          </li>
+        </ol>
         <p class="status" id="stepStatus">Ô nhịp 1/4 · phách 1</p>
       </div>
       <div class="grid-wrap" id="gridWrap">
@@ -208,6 +235,17 @@
           <video id="video" playsinline muted></video>
           <canvas class="overlay" id="overlay"></canvas>
           <div class="cam-empty" id="camEmpty">
+            <svg class="cam-art" viewBox="0 0 220 96" aria-hidden="true">
+              <path class="ca-frame" d="M10 22V8h16M210 22V8h-16M10 74v14h16M210 74V88h-16"/>
+              <rect class="ca-strip" x="26" y="34" width="168" height="28" rx="3"/>
+              <g class="ca-cells">
+                <rect x="34" y="40" width="16" height="16" rx="3"/><rect x="54" y="40" width="16" height="16" rx="3"/><rect x="74" y="40" width="16" height="16" rx="3"/><rect x="94" y="40" width="16" height="16" rx="3"/>
+                <rect x="114" y="40" width="16" height="16" rx="3"/><rect x="134" y="40" width="16" height="16" rx="3"/><rect x="154" y="40" width="16" height="16" rx="3"/><rect x="174" y="40" width="12" height="16" rx="3"/>
+              </g>
+              <circle class="ca-r" cx="42" cy="48" r="5"/><rect class="ca-b" x="78" y="44" width="8" height="8" rx="1" transform="rotate(45 82 48)"/><path class="ca-y" d="M102 42.5l5.5 10h-11z"/>
+              <circle class="ca-r" cx="122" cy="48" r="5"/><circle class="ca-r" cx="162" cy="48" r="5"/><rect class="ca-b" x="138" y="44" width="8" height="8" rx="1" transform="rotate(45 142 48)"/>
+              <path class="ca-scan" d="M18 48h184"/>
+            </svg>
             <p id="camMsg"></p>
             <p class="cam-err" id="camErr" role="alert"></p>
           </div>
