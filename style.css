@@ -112,13 +112,15 @@ output, .status, .count, .tempo-out output, .seg--num button { font-variant-nume
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: var(--display); font-weight: 700; font-size: 21px; letter-spacing: -0.01em; font-variation-settings: "opsz" 40; }
-.logo { width: 40px; height: 22px; overflow: visible; }
-.lg-strip { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
-.lg-hole { fill: var(--line-strong); }
-.lg-r { fill: var(--red); } .lg-b { fill: var(--blue); }
-.lg-y { fill: var(--yellow); stroke: var(--yellow-edge); stroke-width: 1; stroke-linejoin: round; }
-.lg-r, .lg-b, .lg-y { transform-box: fill-box; transform-origin: center; }
+.brand { display: flex; align-items: center; flex: none; border-radius: var(--r-sm); }
+.brand-logo { display: block; width: 180px; height: auto; }
+.brand-logo--dark { display: none; }
+:root[data-theme="dark"] .brand-logo--light { display: none; }
+:root[data-theme="dark"] .brand-logo--dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-logo--light { display: none; }
+  :root:not([data-theme="light"]) .brand-logo--dark { display: block; }
+}
 
 .nav { display: flex; gap: 2px; }
 .tab {
@@ -461,7 +463,6 @@ input[type="range"]:focus-visible { outline-offset: 4px; }
   :root { --appbar-h: 52px; }
   body { font-size: 15px; }
   .appbar { padding: 0 var(--s-2) 0 var(--s-4); gap: var(--s-2); }
-  .brand span { font-size: 16px; }
   #presentBtn, .keys { display: none; }
   .nav {
     position: fixed; z-index: 30; left: 0; right: 0; bottom: 0;
@@ -823,10 +824,6 @@ body[data-view="sgk"] { --accent: var(--yellow); --accent-ink: var(--yellow-edge
 .play:focus-visible { outline-color: var(--brand); }
 .disclosure-title { font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.01em; font-variation-settings: "opsz" 36; }
 
-.brand:hover .lg-r { animation: lg-beat .36s var(--ease); }
-.brand:hover .lg-b { animation: lg-beat .36s var(--ease) .09s; }
-.brand:hover .lg-y { animation: lg-beat .36s var(--ease) .18s; }
-@keyframes lg-beat { 40% { transform: translateY(-2.5px) scale(1.15); } }
 
 .canvas-head { flex-wrap: wrap; }
 .howto {
@@ -914,7 +911,6 @@ body[data-view="sgk"] { --accent: var(--yellow); --accent-ink: var(--yellow-edge
 
 @media (max-width: 760px) {
   .page-head h1 { font-size: 27px; }
-  .brand { font-size: 19px; }
   .howto { grid-template-columns: minmax(0, 1fr); }
   .howto li { padding: 10px var(--s-3); font-size: 13px; }
   .howto li + li { border-left: none; border-top: 1.5px dashed var(--line-strong); }
