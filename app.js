@@ -17,7 +17,7 @@ function tempoTerm(bpm) {
 }
 
 const BOOKS = [
-  { grade: 6, url: 'https://hanhtrangso.nxbgd.vn/ebook/read/am-nhac-6-10772', pageSuffix: (p) => `?page=${p}` },
+  { grade: 6, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-6.4699901728', pageSuffix: (p) => `#page=${p}` },
   { grade: 7, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-7.4700049640', pageSuffix: (p) => `#page=${p}` },
   { grade: 8, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-8.4700139323', pageSuffix: (p) => `#page=${p}` },
   { grade: 9, url: 'https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-am-nhac-9.4700486486', pageSuffix: (p) => `#page=${p}` },
@@ -2498,7 +2498,7 @@ function buildBooks() {
       </div>
       <div class="acts">
         ${n ? `<a class="btn btn--secondary" href="#doc/${b.grade}"><svg class="ico" aria-hidden="true"><use href="#i-note"/></svg>Luyện đọc nhạc</a>` : ''}
-        <a class="link" href="${b.url}" target="_blank" rel="noopener">Mở sách điện tử<svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a>
+        <a class="link" href="${bookPageUrl(b, 0)}" target="_blank" rel="noopener">Mở sách điện tử<svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a>
       </div>
     </li>`;
   }).join('');
