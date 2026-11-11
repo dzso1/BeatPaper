@@ -27,60 +27,98 @@ const bookPageUrl = (book, page) => book.url + book.pageSuffix(page);
 const READINGS = [
   { grade: 7, no: 1, name: '', origin: 'Nhạc Đức', tempo: 'Vừa phải – Nhịp nhàng', bpm: 92, meter: '4/4', key: 'Đô trưởng',
     topic: 'Chủ đề 1: Ngày khai trường', page: 9,
+    lyricsOrigin: 'Lời ca: Bạn thân đến trường',
+    lyrics: 'Này bạn thân yêu ơi cùng nhau ta đi đến trường vui, nào bạn thân yêu ơi cùng ngoan. Chim hót líu lo vang rộn ràng. Ta cùng bước nhanh vui tươi đến trường.',
     notes: 'C4:1 E4:1 | G4:2 G4:2 E4:2 C4:2 | D4:1 C4:1 D4:1 E4:1 D4:2 C4:1 E4:1 | G4:2 G4:2 E4:2 C4:2 | D4:4 R:2 G4:1 B4:1 | D5:2 D5:2 B4:2 G4:2 | G4:3 C5:1 C5:2 G4:1 B4:1 | D5:2 D5:2 B4:2 G4:2 | C5:4 R:2 |' },
   { grade: 7, no: 2, name: '', origin: 'Hoàng Long', tempo: 'Vừa phải', bpm: 92, meter: '2/4', key: 'Đô trưởng',
     topic: 'Chủ đề 3: Thầy cô và mái trường', page: 25,
+    lyricsOrigin: 'Lời ca: Thầy cô dẫn bước',
+    lyrics: 'Thầy cô dẫn bước em cùng đi. Bao năm dưới mái trường thân yêu. Ghi ơn thầy cô đã dạy dỗ đàn em nên người mai sau này, vững bước trên đường dài. Đi. Thầy cô... đi.',
     notes: 'C4:1 D4:1 |: E4:1 E4:1 E4:1 D4:1 | C4:4~ | C4:2 E4:1 F4:1 | G4:1 G4:1 G4:1 F4:1 | E4:4~ | E4:2 F4:1 E4:1 | D4:3 C4:1 | D4:2 E4:1 E4:1 | D4:3 G4:1 | E4:1 R:1 F4:1 E4:1 | D4:3 C4:1 | D4:2 E4:1 E4:1 | D4:3 G3:1 | [1 C4:4~ | C4:2 C4:1 D4:1 :| [2 C4:4~ | C4:2 R:2 |' },
   { grade: 7, no: 3, name: 'Inh lả ơi', origin: 'Dân ca Thái', tempo: 'Vừa phải', bpm: 88, meter: '2/4', key: 'Ngũ cung, không dấu hoá',
     topic: 'Chủ đề 4: Giai điệu quê hương', page: 34,
+    lyricsOrigin: 'Lời ca: Dân ca Thái',
+    lyrics: 'Inh lả ơi, sao noọng ời ơi, ơi. Khắp núi rừng xanh Tây Bắc sáng ngời tươi. Mùa xuân tới đây ngàn hoa hé cười. Inh lả ơi, sao noọng ời ơi, ơi.',
     notes: 'A4:2 E4:1 G4:1 | A4:4 | G4:2 G4:1 E4:1 | D4:4 | A4:2 E4:2 | D4:2 E4:2 | A4:2 A4:1 G4:1 | E4:2 G4:1 R:1 | D4:2 E4:2 | A4:2 E4:2 | G4:2 G4:1 E4:1 | D4:4 | A4:2 E4:1 G4:1 | A4:4 | G4:2 G4:1 E4:1 | G4:4 |' },
   { grade: 7, no: 4, name: 'Mùa xuân trong rừng', origin: 'Nhạc Ba Lan', tempo: 'Vừa phải – Nhịp nhàng', bpm: 104, meter: '3/4', key: 'Đô trưởng',
     topic: 'Chủ đề 5: Nhịp điệu mùa xuân', page: 43,
+    lyricsOrigin: 'Đặt lời: Hoàng Long',
+    lyrics: 'Kìa trong xanh nước chảy không ngừng, nơi đây bao la núi rừng. Dòng suối mát làn êm trôi, hòa tiếng hát nhẹ chơi vơi. Ngồi phiến đá cùng đưa chân, nghe chào mùa xuân.',
     notes: 'C4:2 C4:2 C4:2 | D4:4 A3:2 | C4:6 | G3:6 | E4:2 E4:2 E4:2 | F4:4 A4:2 | D4:6 |: F4:2 A4:2 A4:1 R:1 | E4:2 G4:2 G4:1 R:1 | D4:2 F4:2 F4:1 R:1 | C4:2 E4:2 E4:1 R:1 | D4:2 E4:2 D4:2 | [1 C4:4 D4:2 | E4:6 | G4:6 :| [2 A3:4 G3:2 | C4:6 |' },
   { grade: 7, no: 5, name: '', origin: 'Dân ca Ukraina', tempo: 'Moderato (Vừa phải)', bpm: 96, meter: '2/4', key: 'Đô trưởng',
     topic: 'Chủ đề 7: Cuộc sống tươi đẹp', page: 58,
+    lyricsOrigin: 'Lời ca: Cuộc sống tươi đẹp',
+    lyrics: 'Bình minh lên, nắng chan hòa rọi muôn nơi, sáng. Chim ca vang đón ngày mới, rộn rã câu ca vui. Bạn ơi ta cùng đến trường học bao điều hay mang tình bạn thương. Vui bước bên nhau về.',
     notes: 'C4:2 E4:1 F4:1 | G4:3 E4:1 | A4:1 A4:1 A4:1 C5:1 | G4:4 | C4:1 C4:1 E4:1 F4:1 | G4:3 E4:1 | A4:1 A4:1 A4:1 C5:1 | G4:4 | G4:1 G4:1 F4:1 F4:1 | E4:1 E4:1 D4:2 | G4:1 G4:1 F4:1 F4:1 | E4:1 E4:1 D4:2 | E4:1 E4:1 F4:1 D4:1 | C4:4 |' },
   { grade: 6, no: 1, name: '', origin: 'Mai Lan', tempo: 'Vừa phải – Nhịp nhàng', bpm: 88, meter: '2/4', key: 'Đô trưởng',
     topic: 'Chủ đề 1: Tuổi học trò', page: 11,
+    lyricsOrigin: 'Lời mới: SGK Kết nối tri thức',
+    lyrics: 'Mùa phượng vừa trôi qua, mùa hoa cúc mang sắc vàng. Cùng hát vang đến trường, trong lòng biết bao vui mừng.',
     notes: 'C4:1 D4:1 E4:1 F4:1 | G4:3 G4:1 | A4:1 C5:1 B4:1 A4:1 | G4:2 R:2 | A4:1 C5:1 B4:1 A4:1 | G4:3 E4:1 | D4:1 F4:1 E4:1 D4:1 | C4:4 |' },
   { grade: 6, no: 2, name: 'Suliko', origin: 'Dân ca Gruzia', tempo: 'Vừa phải', bpm: 80, meter: '4/4', key: 'Đô trưởng',
     topic: 'Chủ đề 3: Nhớ ơn thầy cô', page: 25,
+    lyricsOrigin: 'Lời ca: Tri ân thầy cô',
+    lyrics: 'Em yêu thầy cô, yêu mái trường xưa. Cho em tương lai tươi sáng ngày mai. Nét phấn thầy cô thắp lên bao niềm tin vào đời, cho em thêm yêu người thêm yêu đời.',
     notes: 'G4:1 G4:1 E4:1 F4:1 G4:2 A4:1 F4:1 | G4:8 | B4:1 B4:1 B4:1 B4:1 B4:2 D5:1 B4:1 | C5:8 |: C5:1 C5:1 B4:1 C5:1 D5:1 C5:1 B4:1 A4:1 | B4:2 A4:2 G4:4 | A4:1 A4:1 G4:1 G4:1 F4:2 G4:1 F4:1 | E4:8 :|' },
   { grade: 6, no: 3, name: '', origin: 'Hoàng Long', tempo: 'Vừa phải – Nhịp nhàng', bpm: 88, meter: '2/4', key: 'Đô trưởng',
     topic: 'Chủ đề 5: Giai điệu quê hương', page: 41,
+    lyricsOrigin: 'Lời mới: Giai điệu mùa xuân',
+    lyrics: 'Ngày nắng lên, hoa đào hoa mai tươi thắm. Lộc biếc xanh, sơn ca hót cùng vàng anh. Mùa xuân về, gia đình rộn vang câu hát. Xuân đã sang, an bình đến cho mọi nhà.',
     notes: 'C4:2 G4:2 | E4:3 D4:1 | C4:1 D4:1 E4:1 G4:1 | A4:4 | G4:2 C5:2 | A4:3 G4:1 | E4:1 G4:1 E4:1 D4:1 | G4:4 | C4:2 G4:2 | E4:3 D4:1 | C4:1 D4:1 E4:1 G4:1 | A4:4 | G4:2 C5:2 | A4:3 G4:1 | E4:1 G4:1 E4:1 D4:1 | C4:4 |' },
   { grade: 6, no: 4, name: 'Pê-chi-a', origin: 'Kabalevsky', tempo: 'Vừa phải – Nhịp nhàng', bpm: 92, meter: '4/4', key: 'Đô trưởng',
     topic: 'Chủ đề 6: Mẹ trong trái tim em', page: 50,
+    lyricsOrigin: 'Lời mới: Ngày mới tươi vui',
+    lyrics: 'Một ngày mới lại đến rồi, nắng xuân sang cùng tiếng hát. Đàn chim hót ríu rít vang, em vui bước đến trường này. Kìa đàn bướm xinh, bay trong nắng mai tươi, ông mặt trời lên sáng ngời.',
     notes: 'C5:1 C5:1 C5:1 B4:1 C5:2 A4:2 | G4:1 G4:1 G4:1 A4:1 G4:2 E4:2 | F4:1 F4:1 F4:1 E4:1 D4:2 G4:2 | E4:1 E4:1 E4:1 D4:1 C4:2 C4:2 | C5:2 A4:2 C5:2 G4:2 | A4:1 G4:1 F4:1 E4:1 G4:4 | G4:2 G4:2 D4:2 G4:2 | C4:4 C4:4 |' },
-  { grade: 6, no: 5, name: '', origin: 'Mai Lan - Thanh Vân', tempo: 'Vừa phải – Nhịp nhàng', bpm: 96, meter: '3/4', key: 'Đô trưởng',
+  { grade: 6, no: 5, name: 'Nắng xuân', origin: 'Mai Lan - Thanh Vân', tempo: 'Vừa phải – Nhịp nhàng', bpm: 96, meter: '3/4', key: 'Đô trưởng',
     topic: 'Chủ đề 7: Âm nhạc nước ngoài', page: 57,
+    lyricsOrigin: 'Đặt lời: Duy Tài',
+    lyrics: 'Theo làn gió đưa nắng lên, trải khắp muôn nơi tràn. Mùa xuân mang bao ước mơ dâng đời tươi.',
     notes: 'G4:2 E4:2 A4:2 | G4:4 C5:2 | B4:2 A4:1 B4:1 C5:1 A4:1 | G4:4 R:2 | F4:2 D4:2 F4:2 | E4:4 G4:2 | F#4:2 G4:2 D4:2 | C4:6 |' },
   { grade: 8, no: 1, name: '', origin: 'Nhạc: Dân ca Nga', tempo: 'Vừa phải', bpm: 88, meter: '2/4', key: 'Đô trưởng',
     topic: 'Chủ đề 1: Chào năm học mới', page: 9,
+    lyricsOrigin: 'Đặt lời: Duy Tài',
+    lyrics: 'Bạn ơi lớp chúng mình cùng vui nào bạn ơi, ta cùng múa vui và hát ca rộn ràng, cùng hát theo lời hát ca nhịp nhàng, cùng nắm tay và hát ca nào.',
     notes: 'C4:2 G4:2 | A4:1 G4:1 F4:1 E4:1 | G4:2 C4:1 E4:1 | G4:2 G4:1 F4:1 | A4:1 G4:1 F4:1 A4:1 | G4:2 C4:2 | C4:3 C4:1 | F4:1 E4:1 D4:1 F4:1 | E4:2 C4:2 | C4:3 C4:1 | F4:1 E4:1 D4:1 F4:1 | E4:2 C4:2 |' },
   { grade: 8, no: 2, name: '', origin: 'Nhạc: Hoàng Long', tempo: 'Vừa phải – Nhịp nhàng', bpm: 144, meter: '3/8', key: 'Đô trưởng',
     topic: 'Chủ đề 3: Hoà ca', page: 25,
+    lyricsOrigin: 'Lời ca: Mái trường mến yêu',
+    lyrics: 'Chiều dần buông, nắng vương trên cành cây. Sân trường yên bình, lời cô ngân nga dài. Dù ngày mai bước trên đường tương lai, ơn thầy cô mãi ghi trong lòng chúng em.',
     notes: 'G4:2 G4:1 | A4:2 C5:1 | A4:1.5 G4:0.5 E4:1 | G4:3 | E4:1 C4:1 E4:1 | D4:2 E4:1 | G4:1.5 A4:0.5 G4:1 | E4:3 | G4:2 G4:1 | A4:2 C5:1 | A4:1.5 G4:0.5 E4:1 | D4:3 | E4:1 C4:1 E4:1 | G4:2 A4:1 | B4:1.5 A4:0.5 G4:1 | C5:3 |' },
   { grade: 8, no: 3, name: '', origin: 'Nhạc: Dân ca Gruzia', tempo: 'Nhịp nhàng – Uyển chuyển', bpm: 53, meter: '6/8', key: 'Đô trưởng',
     topic: 'Chủ đề 5: Chào xuân', page: 41,
+    lyricsOrigin: 'Lời ca: Chào xuân',
+    lyrics: 'Mùa xuân sang, đón giao thừa mừng năm mới sang về. Ngàn hoa tươi thắm nở ngập tràn muôn tia nắng chan hòa khắp nơi. Đàn chim tung cánh bay trên bầu trời. Hòa câu ca hát vang đón chào mùa xuân. Đàn chim hót vang líu lo.',
     notes: 'G4:2 G4:1 | C5:2 G4:1 C5:1 B4:1 A4:1 | B4:3 D5:2 C5:1 | B4:2 A4:1 C5:1 B4:1 A4:1 | G4:3 G4:2 A4:1 | A4:2 G4:1 G4:1 F4:1 E4:1 | F4:3 F4:2 A4:1 | G4:2 F4:1 F4:1 E4:1 D4:1 | E4:3 G4:2 A4:1 | A4:2 G4:1 G4:1 F4:1 E4:1 | F4:3 F4:2 A4:1 | G4:2 F4:1 F4:1 E4:1 D4:1 | C4:3 |' },
   { grade: 8, no: 4, name: 'Trở về Surriento', origin: 'Nhạc: Ernesto de Curtis', tempo: 'Andantino', bpm: 84, meter: '3/4', key: 'La thứ',
     topic: 'Chủ đề 6: Âm nhạc nước ngoài', page: 49,
+    lyricsOrigin: 'Lời Việt: NSND Trung Kiên',
+    lyrics: 'Biển hiền hòa lớp sóng đẹp bao la, lòng ta như rộn rã ngàn câu ca, ôi đất nước xinh tươi như mộng đời, lưu luyến trong tâm hồn bao người.',
     notes: 'A3:1 B3:1 C4:1 D4:1 E4:1 C4:1 | E4:2 E4:2 R:2 | D4:1 E4:1 F4:1 D4:1 F4:1 D4:1 | A4:2 A4:2 R:2 | A4:1 B4:1 C5:1 B4:1 A4:1 B4:1 | E4:2 E4:2 R:2 | D4:1 E4:1 D4:1 C4:1 B3:1 C4:1 | A3:4 R:2 |' },
   { grade: 8, no: 5, name: 'Bản làng em', origin: 'Nhạc và lời: Hoàng Long', tempo: 'Vui – Nhịp nhàng', bpm: 100, meter: '2/4', key: 'La thứ',
     topic: 'Chủ đề 7: Giai điệu quê hương', page: 57,
+    lyricsOrigin: 'Nhạc và lời: Hoàng Long',
+    lyrics: 'Bản làng quê em có suối nước trong xanh lượn quanh. Đây núi rừng biếc xanh xanh, đàn chim hót líu lo trên cành. Chim hót líu lo trên cành cây biếc.',
     notes: '|: A3:2 C4:1 D4:1 | E4:3 G4:1 | A4:1 A4:0.5 G4:0.5 E4:1 D4:1 | E4:4 | E4:1 G4:1 C4:1 E4:1 | D4:1 D4:2 E4:1 | [1 G4:1 A4:0.5 G4:0.5 E4:1 D4:1 | C4:4 :| [2 G4:1 A4:0.5 G4:0.5 E4:1 G4:1 | A4:2 A4:2 | A4:4 |' },
   { grade: 9, no: 1, name: '', origin: 'Nhạc: Nhóm tác giả', tempo: 'Vừa phải', bpm: 92, meter: '2/4', key: 'Đô trưởng',
     topic: 'Chủ đề 1: Nối vòng tay lớn', page: 8,
+    lyricsOrigin: 'Lời ca: Tiếng trống trường vang',
+    lyrics: 'Tùng tùng nghe tiếng trống trường rộn rã vang. Cắc tùng cắc tùng tùng, chúng em vào. Ngồi lắng nghe từng bài học cô giáo dạy. Lời hát ngân nga, múa ca nhịp nhàng vui.',
     notes: 'C4:2 C4:2 | G4:2 G4:1 A4:1 | E4:2 F4:2 | G4:3 A4:1 | C4:2 C4:2 | C4:2 A4:1 G4:1 | F4:2 G4:2 | A4:4 | G4:2 C5:2 | G4:2 G4:1 A4:1 | A4:2 A4:2 | E4:3 D4:1 | A4:2 F4:2 | G4:3 B4:1 | A4:1 A4:1 G4:1 A4:1 | C5:4 |' },
   { grade: 9, no: 2, name: '', origin: 'Nhạc: Hoàng Long', tempo: 'Vui – Nhịp nhàng', bpm: 112, meter: '4/4', key: 'La thứ',
     topic: 'Chủ đề 3: Kỉ niệm dưới mái trường', page: 27,
+    lyricsOrigin: 'Lời ca: Ngày mới tươi vui',
+    lyrics: 'Bình minh rực sáng, chim líu lo hót chào ngày mới. Trời xanh đẹp tươi, ánh nắng lên ngàn hoa xinh khoe màu. Nhịp bước rộn vang, em bước nhanh cùng vui tới lớp. Nở thắm nụ cười, em đến trường cùng vui hòa ca.',
     notes: 'A3:2 E4:2 A3:2 E4:2 | D4:1 E4:1 D4:1 E4:1 C4:1 A3:1 E4:1 R:1 | E4:2 A4:2 E4:2 A4:2 | A4:1 B4:1 G4:1 G4:0.5 A4:0.5 G4:1 E4:1 A4:1 R:1 | A3:2 E4:2 A3:2 E4:2 | D4:1 E4:1 D4:1 C4:1 D4:1 E4:1 G4:1 R:1 | E4:2 B4:2 A4:2 G4:2 | G4:1 A4:1 E4:1 G4:1 A4:1.5 G4:0.5 A4:1 R:1 |' },
   { grade: 9, no: 3, name: '', origin: 'Nhạc: Z. Kodály (Hungary)', tempo: 'Hành khúc', bpm: 108, meter: '2/4', key: 'Đô trưởng',
     topic: 'Chủ đề 5: Trái đất xanh', page: 41, remark: 'Canon 2 bè, ứng dụng phát bè trên',
+    lyricsOrigin: 'Lời ca: Trái Đất xanh',
+    lyrics: 'Cùng giữ Trái Đất này màu xanh tươi. Hòa chung tiếng hát rộn ràng nơi nơi. Bầu trời trong sáng muôn ngàn chim tung cánh bay lượn trong bình minh. Cùng nhau giữ lấy màu xanh bình yên. Yên.',
     notes: 'C4:2 D4:2 | E4:2 R:2 | G4:1 G4:1 E4:1 E4:1 | D4:2 R:2 | C4:2 D4:2 | E4:2 R:2 | C4:1 C4:1 A3:1 A3:1 | C4:2 R:2 |: E4:1 E4:1 E4:1 E4:1 | A4:1 G4:1 D4:2 | E4:1 G4:1 E4:1 D4:1 | C4:1 A3:1 G3:2 | C4:2 D4:2 | E4:2 R:2 | C4:1 C4:1 A3:1 A3:1 | [1 C4:2 R:2 :| [2 C4:2 R:2 |' },
   { grade: 9, no: 4, name: 'Bài hát cổ nước Pháp (trích)', origin: 'Nhạc: P. I. Tchaikovsky', tempo: 'Hơi chậm', bpm: 66, meter: '2/4', key: 'La thứ',
     topic: 'Chủ đề 7: Âm nhạc nước ngoài', page: 57,
+    lyricsOrigin: 'Lời Việt: Đỗ Thanh Hiên',
+    lyrics: 'Dòng sông quê hương em xanh biếc từ bao đời rồi. Sông như dải lụa mềm dài, trải trên cánh đồng ngát mênh mông trời xa. Dãi dầu bao phong ba mà sông vẫn cứ hiền hoà. Vẫn dạt dào từng ngàn sóng xô ngọt mát phù sa bồi đắp.',
     notes: 'E4:1 | A4:1 B4:1 C5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:1 F5:0.5 E5:0.5 D5:1 C5:1 | B4:3 A4:1 | A4:3 E4:1 | A4:1 B4:1 C5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:3 E5:1 | D5:1 E5:1 F5:1 D5:1 | E5:1 F5:0.5 E5:0.5 D5:1 C5:1 | B4:3 A4:1 | A4:4 |' },
 ];
 
@@ -1895,7 +1933,7 @@ const SOLFA = { C: 'Đô', D: 'Rê', E: 'Mi', F: 'Fa', G: 'Son', A: 'La', B: 'Si
 const LETTERS = 'CDEFGAB';
 const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
-const rOpt = { mode: 'melody', countIn: true, click: true, loop: false, look: 'blocks' };
+const rOpt = { mode: 'melody', countIn: true, click: true, loop: false, look: 'blocks', text: 'notes' };
 const rd = {
   grade: 7, reading: null, bars: [], mi: null, events: [], total: 0, firstIdx: 0,
   bpm: 92, playing: false, idx: 0, pos: 0, time: 0, endTime: 0, drawQ: [], bus: null, cur: null,
@@ -1920,7 +1958,7 @@ function meterInfo(meter) {
   return { n, d, barLen: n * 8 / d, beatLen: compound ? 3 : 8 / d };
 }
 
-function parseScore(str) {
+function parseScore(str, lyricsStr = '') {
   const bars = [];
   let cur = { items: [] };
   const close = () => {
@@ -1942,6 +1980,29 @@ function parseScore(str) {
     }
   });
   close();
+
+  if (lyricsStr) {
+    const words = lyricsStr.trim().split(/\s+/);
+    let wi = 0;
+    let prev = null;
+    bars.forEach((b) => {
+      b.items.forEach((it) => {
+        if (!it.rest) {
+          const cont = prev && !prev.rest && prev.tie && prev.midi === it.midi;
+          if (cont) {
+            it.cont = true;
+            it.lyric = '';
+          } else {
+            it.lyric = words[wi++] || '';
+          }
+          prev = it;
+        } else {
+          prev = null;
+        }
+      });
+    });
+  }
+
   return bars;
 }
 
@@ -2010,6 +2071,8 @@ function renderScore() {
   const { bars, mi } = rd;
   const box = $('rScore');
   box.innerHTML = '';
+  const isLyrics = rOpt.text === 'lyrics' && rd.reading && rd.reading.lyrics;
+  box.classList.toggle('lyrics-mode', !!isLyrics);
   const ts = document.createElement('div');
   ts.className = 'timesig';
   ts.innerHTML = `<span>${mi.n}</span><span>${mi.d}</span>`;
@@ -2051,8 +2114,10 @@ function renderScore() {
         if (it.oct >= 5) n.dataset.oct = 'hi';
         if (it.oct <= 3) n.dataset.oct = 'lo';
         n.style.top = `${yOf(it.step)}px`;
-        n.innerHTML = `<span>${name}</span>`;
-        n.title = name + (it.oct >= 5 ? ' (quãng tám cao)' : it.oct <= 3 ? ' (quãng tám thấp)' : '') + ' · bấm để nghe';
+        const label = isLyrics && it.lyric ? it.lyric : name;
+        n.innerHTML = `<span>${label}</span>`;
+        n.title = (isLyrics && it.lyric ? `${it.lyric} · ${name}` : name) +
+          (it.oct >= 5 ? ' (quãng tám cao)' : it.oct <= 3 ? ' (quãng tám thấp)' : '') + ' · bấm để nghe';
         n.addEventListener('click', () => playNote(it));
       }
       const before = x === 0 ? lastItemOf(bars[bi - 1]) : prev;
@@ -2071,8 +2136,9 @@ function renderScore() {
 const lastItemOf = (bar) => bar && bar.items[bar.items.length - 1];
 
 function scoreText() {
+  const isLyrics = rOpt.text === 'lyrics' && rd.reading && rd.reading.lyrics;
   return `Nhịp ${rd.reading.meter}. ` + rd.bars.map((b, i) =>
-    `Ô nhịp ${i + 1}: ` + b.items.map((it) => (it.rest ? 'lặng' : SOLFA[it.letter] + (it.acc === '#' ? ' thăng' : it.acc === 'b' ? ' giáng' : ''))).join(', ')
+    `Ô nhịp ${i + 1}: ` + b.items.map((it) => (it.rest ? 'lặng' : (isLyrics && it.lyric ? it.lyric : SOLFA[it.letter] + (it.acc === '#' ? ' thăng' : it.acc === 'b' ? ' giáng' : '')))).join(', ')
   ).join('. ');
 }
 
@@ -2143,7 +2209,7 @@ function selectReading(r) {
   if (rd.playing) rStop();
   rd.reading = r;
   rd.mi = meterInfo(r.meter);
-  rd.bars = parseScore(r.notes);
+  rd.bars = parseScore(r.notes, r.lyrics);
   const list = $('rlist');
   [...list.querySelectorAll('.ritem')].forEach((b) => {
     const on = +b.dataset.no === r.no;
@@ -2152,7 +2218,9 @@ function selectReading(r) {
   });
   $('rTitle').textContent = readingTitle(r) + (r.name ? ` · ${r.name}` : '');
   const book = bookOf(r.grade);
-  $('rMeta').innerHTML = [originText(r), r.key, `Nhịp ${r.meter}`, r.remark].filter(Boolean).join(' · ') +
+  const origin = originText(r);
+  const lyricInfo = (rOpt.text === 'lyrics' && r.lyricsOrigin) ? r.lyricsOrigin : null;
+  $('rMeta').innerHTML = [origin, lyricInfo, r.key, `Nhịp ${r.meter}`, r.remark].filter(Boolean).join(' · ') +
     ` · <a href="${bookPageUrl(book, r.page)}" target="_blank" rel="noopener" title="Mở đúng trang ${r.page} trong sách điện tử">SGK Âm nhạc ${r.grade}, tr. ${r.page} ↗</a>`;
   setRBpm(r.bpm);
   refreshScore();
@@ -2255,6 +2323,7 @@ function buildAbc() {
   let music = '';
   const words = [];
   let prevItem = null;
+  const isLyrics = rOpt.text === 'lyrics' && rd.reading && rd.reading.lyrics;
   bars.forEach((bar, bi) => {
     const accs = {};
     if (bi === 0 && bar.repeatStart) music += '|: ';
@@ -2274,7 +2343,11 @@ function buildAbc() {
         if ((accs[key] || '') !== it.acc) { acc = ABC_ACC[it.acc]; accs[key] = it.acc; }
         music += acc + abcPitch(it) + abcDur(it.dur) + (it.tie ? '-' : '');
         const cont = prevItem && !prevItem.rest && prevItem.tie && prevItem.midi === it.midi;
-        words.push(cont ? '*' : (SOLFA[it.letter] + (it.acc === '#' ? '♯' : it.acc === 'b' ? '♭' : '')).toLowerCase());
+        if (isLyrics) {
+          words.push(cont ? '*' : (it.lyric || '*'));
+        } else {
+          words.push(cont ? '*' : (SOLFA[it.letter] + (it.acc === '#' ? '♯' : it.acc === 'b' ? '♭' : '')).toLowerCase());
+        }
       }
       p += it.dur;
       prev = it;
@@ -2361,6 +2434,23 @@ function setLook(look) {
   refreshScore();
 }
 document.querySelectorAll('[data-look]').forEach((b) => b.addEventListener('click', () => setLook(b.dataset.look)));
+
+function setText(text) {
+  rOpt.text = text;
+  document.querySelectorAll('[data-text]').forEach((b) =>
+    b.setAttribute('aria-pressed', b.dataset.text === text ? 'true' : 'false'));
+  try { localStorage.setItem('beatpaper-rtext', text); } catch (e) {}
+  if (rd.reading) {
+    const book = bookOf(rd.reading.grade);
+    const origin = originText(rd.reading);
+    const lyricInfo = (text === 'lyrics' && rd.reading.lyricsOrigin) ? rd.reading.lyricsOrigin : null;
+    $('rMeta').innerHTML = [origin, lyricInfo, rd.reading.key, `Nhịp ${rd.reading.meter}`, rd.reading.remark].filter(Boolean).join(' · ') +
+      ` · <a href="${bookPageUrl(book, rd.reading.page)}" target="_blank" rel="noopener" title="Mở đúng trang ${rd.reading.page} trong sách điện tử">SGK Âm nhạc ${rd.reading.grade}, tr. ${rd.reading.page} ↗</a>`;
+  }
+  refreshScore();
+  announce(text === 'lyrics' ? 'Hiển thị lời ca' : 'Hiển thị tên nốt');
+}
+document.querySelectorAll('[data-text]').forEach((b) => b.addEventListener('click', () => setText(b.dataset.text)));
 
 function rStatusIdle() {
   $('rStatus').textContent = `${rd.bars.length} ô nhịp`;
@@ -2672,6 +2762,14 @@ try {
     rOpt.look = look;
     document.querySelectorAll('[data-look]').forEach((b) =>
       b.setAttribute('aria-pressed', b.dataset.look === look ? 'true' : 'false'));
+  }
+} catch (e) {}
+try {
+  const text = localStorage.getItem('beatpaper-rtext');
+  if (['notes', 'lyrics'].includes(text)) {
+    rOpt.text = text;
+    document.querySelectorAll('[data-text]').forEach((b) =>
+      b.setAttribute('aria-pressed', b.dataset.text === text ? 'true' : 'false'));
   }
 } catch (e) {}
 setupThumbs();
