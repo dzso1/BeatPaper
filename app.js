@@ -1698,19 +1698,24 @@ function setStripReady(ready, dots) {
 function writeFromCamera() {
   if (!stripReady) return;
   const strip = detected.slice(0, STEPS).map((v) => v || 'W');
-  const next = Object.fromEntries(LANES.map((lane) => [lane, strip.map((v) => v === lane && !laneLocked(lane))]));
-  const changed = strip.map((_, i) => LANES.some((lane) => next[lane][i] !== state.tracks[lane][i]));
-  if (!changed.some(Boolean)) { showToast('Lưới đã giống dải giấy.'); return; }
+  const next = copyTracks(state.tracks);
+  const added = [];
+  strip.forEach((lane, i) => {
+    if (!LANES.includes(lane) || laneLocked(lane) || next[lane][i]) return;
+    next[lane][i] = true;
+    added.push({ lane, i });
+  });
+  if (!added.length) { showToast('Không có nốt mới để thêm vào lưới.'); return; }
   pushUndo();
   state.tracks = next;
   state.preset = -1;
   dict.checked = false;
   renderCells();
   markPreset();
-  changed.forEach((c, i) => c && LANES.forEach((lane) => replay(cellEls[lane][i], 'cam-flash')));
-  const n = strip.filter((v) => v !== 'W').length;
-  showToast(`Đã chép ${n} nốt từ dải giấy`, 'Hoàn tác', undo);
-  announce(`Đã chép ${n} nốt từ dải giấy`);
+  added.forEach(({ lane, i }) => replay(cellEls[lane][i], 'cam-flash'));
+  const n = added.length;
+  showToast(`Đã thêm ${n} nốt từ dải giấy`, 'Hoàn tác', undo);
+  announce(`Đã thêm ${n} nốt từ dải giấy`);
 }
 
 function drawOverlay(zs) {
