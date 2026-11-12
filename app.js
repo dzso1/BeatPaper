@@ -1940,7 +1940,7 @@ const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
 const rOpt = { mode: 'melody', countIn: true, click: true, loop: false, look: 'blocks', text: 'notes' };
 const rd = {
-  grade: 7, reading: null, bars: [], mi: null, events: [], total: 0, firstIdx: 0,
+  grade: 6, reading: null, bars: [], mi: null, events: [], total: 0, firstIdx: 0,
   bpm: 92, playing: false, idx: 0, pos: 0, time: 0, endTime: 0, drawQ: [], bus: null, cur: null,
 };
 let rTicker = null;
