@@ -2368,7 +2368,7 @@ function buildAbc() {
   return `X:1\nM:${rd.reading.meter}\nL:1/8\nK:C\n${music.trim()}\nw:${words.join(' ')}\n`;
 }
 
-function adjustStaffLyrics(box, minGap = 8) {
+function adjustStaffLyrics(box, minGap = 3.5) {
   const svg = box.querySelector('svg');
   if (!svg) return 0;
   const texts = Array.from(svg.querySelectorAll('text')).filter((t) => {
@@ -2439,20 +2439,20 @@ async function renderStaff() {
   const present = document.body.classList.contains('present');
   const width = $('rWrap').clientWidth;
   const isLyrics = rOpt.text === 'lyrics' && rd.reading && rd.reading.lyrics;
-  const scale = present ? Math.max(1.4, Math.min(2.2, innerHeight / 480)) : width < 520 ? 0.95 : (isLyrics ? 1.08 : 1.2);
-  const prefBars = isLyrics ? (width < 560 ? 1 : (rd.mi.n >= 3 ? 2 : 2)) : (width < 520 ? 2 : 4);
-  const minSpacing = isLyrics ? 2.4 : 1.6;
-  const maxSpacing = isLyrics ? 4.5 : 2.7;
-  const vocalSize = isLyrics ? '11.5' : '13';
+  const scale = present ? Math.max(1.4, Math.min(2.2, innerHeight / 480)) : width < 520 ? 0.95 : 1.18;
+  const prefBars = width < 520 ? 2 : 4;
+  const minSpacing = isLyrics ? 1.65 : 1.6;
+  const maxSpacing = 2.7;
+  const vocalSize = isLyrics ? '12' : '13';
   const tune = window.ABCJS.renderAbc(box, buildAbc(), {
     scale,
-    staffwidth: Math.max(220, width / scale - 24),
+    staffwidth: Math.max(220, width / scale - 20),
     wrap: { minSpacing, maxSpacing, preferredMeasuresPerLine: prefBars },
-    paddingtop: 6, paddingbottom: 6, paddingleft: 4, paddingright: 4,
+    paddingtop: 4, paddingbottom: 4, paddingleft: 2, paddingright: 2,
     format: { vocalfont: `"Plus Jakarta Sans" ${vocalSize}`, annotationfont: '"Plus Jakarta Sans" 11.5' },
     selectTypes: false,
   })[0];
-  adjustStaffLyrics(box, 8);
+  adjustStaffLyrics(box, 3.5);
   const notes = [];
   tune.lines.forEach((line) => (line.staff || []).forEach((st) => st.voices.forEach((v) => v.forEach((el) => {
     if (el.el_type === 'note') notes.push(el);
