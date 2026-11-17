@@ -2368,6 +2368,54 @@ function buildAbc() {
   return `X:1\nM:${rd.reading.meter}\nL:1/8\nK:C\n${music.trim()}\nw:${words.join(' ')}\n`;
 }
 
+function adjustStaffLyrics(box, minGap = 8) {
+  const svg = box.querySelector('svg');
+  if (!svg) return 0;
+  const texts = Array.from(svg.querySelectorAll('text')).filter((t) => {
+    if (t.getAttribute('data-name') === 'lyric') return true;
+    const s = t.textContent.trim();
+    return s && !/^[0-9\/♯♭#bC=]+$/.test(s) && !t.classList.contains('abcjs-composer') && !t.classList.contains('abcjs-title');
+  });
+  if (!texts.length) return 0;
+
+  const lines = [];
+  texts.forEach((t) => {
+    const y = parseFloat(t.getAttribute('y') || '0');
+    let line = lines.find((l) => Math.abs(l.y - y) < 8);
+    if (!line) {
+      line = { y, items: [] };
+      lines.push(line);
+    }
+    const b = t.getBBox();
+    line.items.push({ text: t.textContent.trim(), el: t, x: parseFloat(t.getAttribute('x') || '0'), bboxX: b.x, width: b.width });
+  });
+
+  let shifts = 0;
+  lines.forEach((line) => {
+    line.items.sort((a, b) => a.x - b.x);
+    for (let i = 0; i < line.items.length - 1; i++) {
+      const cur = line.items[i];
+      const next = line.items[i + 1];
+      const curRight = cur.bboxX + cur.width;
+      const nextLeft = next.bboxX;
+      const gap = nextLeft - curRight;
+      if (gap < minGap) {
+        const shift = curRight + minGap - nextLeft;
+        for (let j = i + 1; j < line.items.length; j++) {
+          const item = line.items[j];
+          item.x += shift;
+          item.bboxX += shift;
+          const newX = item.x.toFixed(2);
+          item.el.setAttribute('x', newX);
+          item.el.querySelectorAll('tspan').forEach((ts) => ts.setAttribute('x', newX));
+        }
+        shifts++;
+      }
+    }
+  });
+  return shifts;
+}
+
 async function renderStaff() {
   const box = $('rStaff');
   const msg = $('staffMsg');
@@ -2390,15 +2438,21 @@ async function renderStaff() {
   msg.hidden = true;
   const present = document.body.classList.contains('present');
   const width = $('rWrap').clientWidth;
-  const scale = present ? Math.max(1.4, Math.min(2.2, innerHeight / 480)) : width < 520 ? 0.95 : 1.2;
+  const isLyrics = rOpt.text === 'lyrics' && rd.reading && rd.reading.lyrics;
+  const scale = present ? Math.max(1.4, Math.min(2.2, innerHeight / 480)) : width < 520 ? 0.95 : (isLyrics ? 1.08 : 1.2);
+  const prefBars = isLyrics ? (width < 560 ? 1 : (rd.mi.n >= 3 ? 2 : 2)) : (width < 520 ? 2 : 4);
+  const minSpacing = isLyrics ? 2.4 : 1.6;
+  const maxSpacing = isLyrics ? 4.5 : 2.7;
+  const vocalSize = isLyrics ? '11.5' : '13';
   const tune = window.ABCJS.renderAbc(box, buildAbc(), {
     scale,
-    staffwidth: Math.max(220, width / scale - 20),
-    wrap: { minSpacing: 1.6, maxSpacing: 2.7, preferredMeasuresPerLine: 4 },
-    paddingtop: 4, paddingbottom: 4, paddingleft: 2, paddingright: 2,
-    format: { vocalfont: '"Plus Jakarta Sans" 13', annotationfont: '"Plus Jakarta Sans" 12' },
+    staffwidth: Math.max(220, width / scale - 24),
+    wrap: { minSpacing, maxSpacing, preferredMeasuresPerLine: prefBars },
+    paddingtop: 6, paddingbottom: 6, paddingleft: 4, paddingright: 4,
+    format: { vocalfont: `"Plus Jakarta Sans" ${vocalSize}`, annotationfont: '"Plus Jakarta Sans" 11.5' },
     selectTypes: false,
   })[0];
+  adjustStaffLyrics(box, 8);
   const notes = [];
   tune.lines.forEach((line) => (line.staff || []).forEach((st) => st.voices.forEach((v) => v.forEach((el) => {
     if (el.el_type === 'note') notes.push(el);
