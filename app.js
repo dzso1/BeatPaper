@@ -1051,7 +1051,7 @@ function stepTempo(id, d) {
 
 let stepTimer = 0;
 const stopStep = () => { clearTimeout(stepTimer); clearInterval(stepTimer); stepTimer = 0; };
-document.querySelectorAll('.step-btn').forEach((b) => {
+document.querySelectorAll('.step-btn[data-for]').forEach((b) => {
   const nudge = () => stepTempo(b.dataset.for, +b.dataset.step);
   b.addEventListener('pointerdown', (e) => {
     if (e.button > 0) return;
@@ -1941,20 +1941,167 @@ const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const rOpt = { mode: 'melody', countIn: true, click: true, loop: false, look: 'blocks', text: 'notes' };
 const rd = {
   grade: 6, reading: null, bars: [], mi: null, events: [], total: 0, firstIdx: 0,
-  bpm: 92, playing: false, idx: 0, pos: 0, time: 0, endTime: 0, drawQ: [], bus: null, cur: null,
+  bpm: 92, transpose: 0, playing: false, idx: 0, pos: 0, time: 0, endTime: 0, drawQ: [], bus: null, cur: null,
 };
 let rTicker = null;
 let rRaf = 0;
 
-function parsePitch(p) {
+const KEY_TRANSPOSE_TABLE = {
+  0:  { major: 'Đô trưởng', minor: 'La thứ', abcMajor: 'C', abcMinor: 'Am', shortMajor: 'Gốc', shortMinor: 'Gốc', shift: 0, keyAccsMajor: {}, keyAccsMinor: {} },
+  1:  { major: 'Rê♭ trưởng', minor: 'Si♭ thứ', abcMajor: 'Db', abcMinor: 'Bbm', shortMajor: 'Rê♭', shortMinor: 'Si♭m', shift: 1, keyAccsMajor: { B:'b', E:'b', A:'b', D:'b', G:'b' }, keyAccsMinor: { B:'b', E:'b', A:'b', D:'b', G:'b' } },
+  2:  { major: 'Rê trưởng', minor: 'Si thứ', abcMajor: 'D', abcMinor: 'Bm', shortMajor: 'Rê', shortMinor: 'Si m', shift: 1, keyAccsMajor: { F:'#', C:'#' }, keyAccsMinor: { F:'#', C:'#' } },
+  3:  { major: 'Mi♭ trưởng', minor: 'Đô thứ', abcMajor: 'Eb', abcMinor: 'Cm', shortMajor: 'Mi♭', shortMinor: 'Đô m', shift: 2, keyAccsMajor: { B:'b', E:'b', A:'b' }, keyAccsMinor: { B:'b', E:'b', A:'b' } },
+  4:  { major: 'Mi trưởng', minor: 'Đô♯ thứ', abcMajor: 'E', abcMinor: 'C#m', shortMajor: 'Mi', shortMinor: 'Đô♯m', shift: 2, keyAccsMajor: { F:'#', C:'#', G:'#', D:'#' }, keyAccsMinor: { F:'#', C:'#', G:'#', D:'#' } },
+  5:  { major: 'Pha trưởng', minor: 'Rê thứ', abcMajor: 'F', abcMinor: 'Dm', shortMajor: 'Pha', shortMinor: 'Rê m', shift: 3, keyAccsMajor: { B:'b' }, keyAccsMinor: { B:'b' } },
+  6:  { major: 'Pha♯ trưởng', minor: 'Mi♭ thứ', abcMajor: 'F#', abcMinor: 'Ebm', shortMajor: 'Pha♯', shortMinor: 'Mi♭m', shift: 3, keyAccsMajor: { F:'#', C:'#', G:'#', D:'#', A:'#', E:'#' }, keyAccsMinor: { B:'b', E:'b', A:'b', D:'b', G:'b', C:'b' } },
+  7:  { major: 'Son trưởng', minor: 'Mi thứ', abcMajor: 'G', abcMinor: 'Em', shortMajor: 'Son', shortMinor: 'Mi m', shift: 4, keyAccsMajor: { F:'#' }, keyAccsMinor: { F:'#' } },
+  8:  { major: 'La♭ trưởng', minor: 'Pha thứ', abcMajor: 'Ab', abcMinor: 'Fm', shortMajor: 'La♭', shortMinor: 'Pha m', shift: 5, keyAccsMajor: { B:'b', E:'b', A:'b', D:'b' }, keyAccsMinor: { B:'b', E:'b', A:'b', D:'b' } },
+  9:  { major: 'La trưởng', minor: 'Pha♯ thứ', abcMajor: 'A', abcMinor: 'F#m', shortMajor: 'La', shortMinor: 'Pha♯m', shift: 5, keyAccsMajor: { F:'#', C:'#', G:'#' }, keyAccsMinor: { F:'#', C:'#', G:'#' } },
+  10: { major: 'Si♭ trưởng', minor: 'Son thứ', abcMajor: 'Bb', abcMinor: 'Gm', shortMajor: 'Si♭', shortMinor: 'Son m', shift: 6, keyAccsMajor: { B:'b', E:'b' }, keyAccsMinor: { B:'b', E:'b' } },
+  11: { major: 'Si trưởng', minor: 'Son♯ thứ', abcMajor: 'B', abcMinor: 'G#m', shortMajor: 'Si', shortMinor: 'Son♯m', shift: 6, keyAccsMajor: { F:'#', C:'#', G:'#', D:'#', A:'#' }, keyAccsMinor: { F:'#', C:'#', G:'#', D:'#', A:'#' } },
+  12: { major: 'Đô trưởng (+8va)', minor: 'La thứ (+8va)', abcMajor: 'C', abcMinor: 'Am', shortMajor: '+8va', shortMinor: '+8va', shift: 0, keyAccsMajor: {}, keyAccsMinor: {} },
+  "-1":  { major: 'Si trưởng', minor: 'Son♯ thứ', abcMajor: 'B', abcMinor: 'G#m', shortMajor: 'Si', shortMinor: 'Son♯m', shift: -1, keyAccsMajor: { F:'#', C:'#', G:'#', D:'#', A:'#' }, keyAccsMinor: { F:'#', C:'#', G:'#', D:'#', A:'#' } },
+  "-2":  { major: 'Si♭ trưởng', minor: 'Son thứ', abcMajor: 'Bb', abcMinor: 'Gm', shortMajor: 'Si♭', shortMinor: 'Son m', shift: -1, keyAccsMajor: { B:'b', E:'b' }, keyAccsMinor: { B:'b', E:'b' } },
+  "-3":  { major: 'La trưởng', minor: 'Pha♯ thứ', abcMajor: 'A', abcMinor: 'F#m', shortMajor: 'La', shortMinor: 'Pha♯m', shift: -2, keyAccsMajor: { F:'#', C:'#', G:'#' }, keyAccsMinor: { F:'#', C:'#', G:'#' } },
+  "-4":  { major: 'La♭ trưởng', minor: 'Pha thứ', abcMajor: 'Ab', abcMinor: 'Fm', shortMajor: 'La♭', shortMinor: 'Pha m', shift: -2, keyAccsMajor: { B:'b', E:'b', A:'b', D:'b' }, keyAccsMinor: { B:'b', E:'b', A:'b', D:'b' } },
+  "-5":  { major: 'Son trưởng', minor: 'Mi thứ', abcMajor: 'G', abcMinor: 'Em', shortMajor: 'Son', shortMinor: 'Mi m', shift: -3, keyAccsMajor: { F:'#' }, keyAccsMinor: { F:'#' } },
+  "-6":  { major: 'Pha♯ trưởng', minor: 'Mi♭ thứ', abcMajor: 'F#', abcMinor: 'Ebm', shortMajor: 'Pha♯', shortMinor: 'Mi♭m', shift: -4, keyAccsMajor: { F:'#', C:'#', G:'#', D:'#', A:'#', E:'#' }, keyAccsMinor: { B:'b', E:'b', A:'b', D:'b', G:'b', C:'b' } },
+  "-7":  { major: 'Pha trưởng', minor: 'Rê thứ', abcMajor: 'F', abcMinor: 'Dm', shortMajor: 'Pha', shortMinor: 'Rê m', shift: -4, keyAccsMajor: { B:'b' }, keyAccsMinor: { B:'b' } },
+  "-8":  { major: 'Mi trưởng', minor: 'Đô♯ thứ', abcMajor: 'E', abcMinor: 'C#m', shortMajor: 'Mi', shortMinor: 'Đô♯m', shift: -5, keyAccsMajor: { F:'#', C:'#', G:'#', D:'#' }, keyAccsMinor: { F:'#', C:'#', G:'#', D:'#' } },
+  "-9":  { major: 'Mi♭ trưởng', minor: 'Đô thứ', abcMajor: 'Eb', abcMinor: 'Cm', shortMajor: 'Mi♭', shortMinor: 'Đô m', shift: -5, keyAccsMajor: { B:'b', E:'b', A:'b' }, keyAccsMinor: { B:'b', E:'b', A:'b' } },
+  "-10": { major: 'Rê trưởng', minor: 'Si thứ', abcMajor: 'D', abcMinor: 'Bm', shortMajor: 'Rê', shortMinor: 'Si m', shift: -6, keyAccsMajor: { F:'#', C:'#' }, keyAccsMinor: { F:'#', C:'#' } },
+  "-11": { major: 'Rê♭ trưởng', minor: 'Si♭ thứ', abcMajor: 'Db', abcMinor: 'Bbm', shortMajor: 'Rê♭', shortMinor: 'Si♭m', shift: -6, keyAccsMajor: { B:'b', E:'b', A:'b', D:'b', G:'b' }, keyAccsMinor: { B:'b', E:'b', A:'b', D:'b', G:'b' } },
+  "-12": { major: 'Đô trưởng (-8va)', minor: 'La thứ (-8va)', abcMajor: 'C', abcMinor: 'Am', shortMajor: '-8va', shortMinor: '-8va', shift: 0, keyAccsMajor: {}, keyAccsMinor: {} }
+};
+
+function transposePitch(p, k = 0) {
+  if (p === 'R') return { rest: true, letter: 'R', oct: 4, acc: '', midi: 0, step: 0 };
   const m = /^([A-G])(#|b)?(\d)$/.exec(p);
-  const oct = +m[3];
-  const acc = m[2] || '';
+  const letter = m[1], acc = m[2] || '', oct = +m[3];
+  if (k === 0) {
+    return {
+      letter, acc, oct,
+      midi: 12 * (oct + 1) + SEMI[letter] + (acc === '#' ? 1 : acc === 'b' ? -1 : 0),
+      step: LETTERS.indexOf(letter) + 7 * oct,
+    };
+  }
+  const info = KEY_TRANSPOSE_TABLE[k] || KEY_TRANSPOSE_TABLE[0];
+  const origMidi = 12 * (oct + 1) + SEMI[letter] + (acc === '#' ? 1 : acc === 'b' ? -1 : 0);
+  const targetMidi = origMidi + k;
+
+  const letterIdx = LETTERS.indexOf(letter);
+  const newLetterIdx = (letterIdx + info.shift + 700) % 7;
+  const newLetter = LETTERS[newLetterIdx];
+
+  const baseOct = Math.floor(targetMidi / 12) - 1;
+  const candidates = [baseOct - 1, baseOct, baseOct + 1];
+  let best = null;
+  let minDiff = 999;
+
+  for (const o of candidates) {
+    const natMidi = 12 * (o + 1) + SEMI[newLetter];
+    const diff = targetMidi - natMidi;
+    if (Math.abs(diff) <= 2 && Math.abs(diff) < minDiff) {
+      minDiff = Math.abs(diff);
+      best = {
+        letter: newLetter,
+        oct: o,
+        acc: diff === 1 ? '#' : diff === -1 ? 'b' : diff === 2 ? '##' : diff === -2 ? 'bb' : '',
+        midi: targetMidi,
+        step: newLetterIdx + 7 * o,
+      };
+    }
+  }
+  return best || { letter, acc, oct, midi: targetMidi, step: LETTERS.indexOf(letter) + 7 * oct };
+}
+
+function parsePitch(p) {
+  return transposePitch(p, 0);
+}
+
+function currentKeyInfo() {
+  const k = rd.transpose || 0;
+  const isMinor = rd.reading && rd.reading.key && rd.reading.key.includes('thứ');
+  const isPenta = rd.reading && rd.reading.key && rd.reading.key.includes('Ngũ cung');
+  const entry = KEY_TRANSPOSE_TABLE[k] || KEY_TRANSPOSE_TABLE[0];
+  if (k === 0) {
+    return {
+      name: rd.reading ? rd.reading.key : 'Đô trưởng',
+      short: 'Gốc',
+      abcKey: isMinor ? 'Am' : 'C',
+      keyAccs: isMinor ? entry.keyAccsMinor : entry.keyAccsMajor,
+    };
+  }
+  if (isMinor) {
+    return {
+      name: entry.minor,
+      short: entry.shortMinor,
+      abcKey: entry.abcMinor,
+      keyAccs: entry.keyAccsMinor,
+    };
+  }
+  if (isPenta) {
+    return {
+      name: `Ngũ cung (${entry.shortMajor})`,
+      short: entry.shortMajor,
+      abcKey: entry.abcMajor,
+      keyAccs: entry.keyAccsMajor,
+    };
+  }
   return {
-    letter: m[1], acc, oct,
-    midi: 12 * (oct + 1) + SEMI[m[1]] + (acc === '#' ? 1 : acc === 'b' ? -1 : 0),
-    step: LETTERS.indexOf(m[1]) + 7 * oct,
+    name: entry.major,
+    short: entry.shortMajor,
+    abcKey: entry.abcMajor,
+    keyAccs: entry.keyAccsMajor,
   };
+}
+
+function currentKeyText() {
+  if (!rd.reading) return '';
+  const k = rd.transpose || 0;
+  if (k === 0) return rd.reading.key;
+  const info = currentKeyInfo();
+  return `${info.name} (${k > 0 ? '+' + k : k})`;
+}
+
+function updateRMeta() {
+  if (!rd.reading) return;
+  const r = rd.reading;
+  const book = bookOf(r.grade);
+  const origin = originText(r);
+  const lyricInfo = (rOpt.text === 'lyrics' && r.lyricsOrigin) ? r.lyricsOrigin : null;
+  $('rMeta').innerHTML = [origin, lyricInfo, currentKeyText(), `Nhịp ${r.meter}`, r.remark].filter(Boolean).join(' · ') +
+    ` · <a href="${bookPageUrl(book, r.page)}" target="_blank" rel="noopener" title="Mở đúng trang ${r.page} trong sách điện tử">SGK Âm nhạc ${r.grade}, tr. ${r.page} ↗</a>`;
+}
+
+function setRTranspose(v, rerender = true) {
+  const k = Math.max(-12, Math.min(12, Math.round(v || 0)));
+  const changed = k !== (rd.transpose || 0);
+  rd.transpose = k;
+  if (rd.playing && changed) rStop();
+
+  if (rd.reading && (changed || !rd.bars.length)) {
+    rd.bars = parseScore(rd.reading.notes, rd.reading.lyrics, rd.transpose);
+    updateRMeta();
+    if (rerender) refreshScore();
+  }
+
+  const info = currentKeyInfo();
+  const out = $('rTransOut');
+  if (out) {
+    const sign = k > 0 ? `+${k}` : `${k}`;
+    out.innerHTML = `<b>${sign}</b><small id="rTransKey">${info.short}</small>`;
+  }
+  const resetBtn = $('rTransReset');
+  if (resetBtn) resetBtn.hidden = (k === 0);
+  const downBtn = $('rTransDown');
+  if (downBtn) downBtn.disabled = (k <= -12);
+  const upBtn = $('rTransUp');
+  if (upBtn) upBtn.disabled = (k >= 12);
+
+  if (changed && rerender) {
+    announce(k === 0 ? 'Đã về giọng gốc' : `Dịch giọng ${k > 0 ? '+' + k : k} nửa cung, giọng ${info.name}`);
+  }
 }
 
 function meterInfo(meter) {
@@ -1963,7 +2110,7 @@ function meterInfo(meter) {
   return { n, d, barLen: n * 8 / d, beatLen: compound ? 3 : 8 / d };
 }
 
-function parseScore(str, lyricsStr = '') {
+function parseScore(str, lyricsStr = '', transpose = 0) {
   const bars = [];
   let cur = { items: [] };
   const close = () => {
@@ -1981,7 +2128,7 @@ function parseScore(str, lyricsStr = '') {
       const [p, d] = tok.split(':');
       const tie = d.endsWith('~');
       const dur = parseFloat(d);
-      cur.items.push(p === 'R' ? { rest: true, dur } : { ...parsePitch(p), dur, tie });
+      cur.items.push(p === 'R' ? { rest: true, dur } : { ...transposePitch(p, transpose), dur, tie });
     }
   });
   close();
@@ -2214,7 +2361,8 @@ function selectReading(r) {
   if (rd.playing) rStop();
   rd.reading = r;
   rd.mi = meterInfo(r.meter);
-  rd.bars = parseScore(r.notes, r.lyrics);
+  rd.transpose = 0;
+  rd.bars = parseScore(r.notes, r.lyrics, 0);
   const list = $('rlist');
   [...list.querySelectorAll('.ritem')].forEach((b) => {
     const on = +b.dataset.no === r.no;
@@ -2222,12 +2370,9 @@ function selectReading(r) {
     if (on && list.scrollWidth > list.clientWidth) list.scrollLeft = b.parentElement.offsetLeft - list.offsetLeft - 4;
   });
   $('rTitle').textContent = readingTitle(r) + (r.name ? ` · ${r.name}` : '');
-  const book = bookOf(r.grade);
-  const origin = originText(r);
-  const lyricInfo = (rOpt.text === 'lyrics' && r.lyricsOrigin) ? r.lyricsOrigin : null;
-  $('rMeta').innerHTML = [origin, lyricInfo, r.key, `Nhịp ${r.meter}`, r.remark].filter(Boolean).join(' · ') +
-    ` · <a href="${bookPageUrl(book, r.page)}" target="_blank" rel="noopener" title="Mở đúng trang ${r.page} trong sách điện tử">SGK Âm nhạc ${r.grade}, tr. ${r.page} ↗</a>`;
+  updateRMeta();
   setRBpm(r.bpm);
+  setRTranspose(0, false);
   refreshScore();
   rStatusIdle();
   if (view === 'doc') {
@@ -2329,8 +2474,10 @@ function buildAbc() {
   const words = [];
   let prevItem = null;
   const isLyrics = rOpt.text === 'lyrics' && rd.reading && rd.reading.lyrics;
+  const keyInfo = currentKeyInfo();
+  const keySigAccs = keyInfo.keyAccs || {};
   bars.forEach((bar, bi) => {
-    const accs = {};
+    const accs = { ...keySigAccs };
     if (bi === 0 && bar.repeatStart) music += '|: ';
     if (bar.volta) music += `[${bar.volta} `;
     const off = bi === 0 && bar.len < mi.barLen ? mi.barLen - bar.len : 0;
@@ -2343,9 +2490,12 @@ function buildAbc() {
       if (it.rest) {
         music += 'z' + abcDur(it.dur);
       } else {
-        const key = it.letter + it.oct;
+        const curAcc = accs[it.letter] !== undefined ? accs[it.letter] : '';
         let acc = '';
-        if ((accs[key] || '') !== it.acc) { acc = ABC_ACC[it.acc]; accs[key] = it.acc; }
+        if (curAcc !== it.acc) {
+          acc = ABC_ACC[it.acc] || '';
+          accs[it.letter] = it.acc;
+        }
         music += acc + abcPitch(it) + abcDur(it.dur) + (it.tie ? '-' : '');
         const cont = prevItem && !prevItem.rest && prevItem.tie && prevItem.midi === it.midi;
         if (isLyrics) {
@@ -2365,7 +2515,7 @@ function buildAbc() {
     else music += ' |';
     music += ' ';
   });
-  return `X:1\nM:${rd.reading.meter}\nL:1/8\nK:C\n${music.trim()}\nw:${words.join(' ')}\n`;
+  return `X:1\nM:${rd.reading.meter}\nL:1/8\nK:${keyInfo.abcKey}\n${music.trim()}\nw:${words.join(' ')}\n`;
 }
 
 function adjustStaffLyrics(box, minGap = 3.5) {
@@ -2499,13 +2649,7 @@ function setText(text) {
   document.querySelectorAll('[data-text]').forEach((b) =>
     b.setAttribute('aria-pressed', b.dataset.text === text ? 'true' : 'false'));
   try { localStorage.setItem('beatpaper-rtext', text); } catch (e) {}
-  if (rd.reading) {
-    const book = bookOf(rd.reading.grade);
-    const origin = originText(rd.reading);
-    const lyricInfo = (text === 'lyrics' && rd.reading.lyricsOrigin) ? rd.reading.lyricsOrigin : null;
-    $('rMeta').innerHTML = [origin, lyricInfo, rd.reading.key, `Nhịp ${rd.reading.meter}`, rd.reading.remark].filter(Boolean).join(' · ') +
-      ` · <a href="${bookPageUrl(book, rd.reading.page)}" target="_blank" rel="noopener" title="Mở đúng trang ${rd.reading.page} trong sách điện tử">SGK Âm nhạc ${rd.reading.grade}, tr. ${rd.reading.page} ↗</a>`;
-  }
+  updateRMeta();
   refreshScore();
   announce(text === 'lyrics' ? 'Hiển thị lời ca' : 'Hiển thị tên nốt');
 }
@@ -2772,6 +2916,15 @@ document.addEventListener('keydown', (e) => {
     toggleMute(LANES[+e.key - 1]);
   } else if (view === 'nhip' && dict.on && (e.key === 'n' || e.key === 'N')) {
     listenTarget();
+  } else if (view === 'doc' && (e.key === '[' || e.key === '{')) {
+    e.preventDefault();
+    setRTranspose((rd.transpose || 0) - 1);
+  } else if (view === 'doc' && (e.key === ']' || e.key === '}')) {
+    e.preventDefault();
+    setRTranspose((rd.transpose || 0) + 1);
+  } else if (view === 'doc' && e.key === '0' && !isInteractive(e.target)) {
+    e.preventDefault();
+    setRTranspose(0);
   } else if (e.key === 'f' || e.key === 'F') {
     setPresent(!document.body.classList.contains('present'));
   }
@@ -2831,5 +2984,8 @@ try {
       b.setAttribute('aria-pressed', b.dataset.text === text ? 'true' : 'false'));
   }
 } catch (e) {}
+$('rTransDown')?.addEventListener('click', () => setRTranspose((rd.transpose || 0) - 1));
+$('rTransUp')?.addEventListener('click', () => setRTranspose((rd.transpose || 0) + 1));
+$('rTransReset')?.addEventListener('click', () => setRTranspose(0));
 setupThumbs();
 route();

@@ -75,6 +75,8 @@
           <dt><kbd>Space</kbd></dt><dd>Phát / dừng</dd>
           <dt><kbd>1</kbd>–<kbd>3</kbd></dt><dd>Tắt/bật từng nhạc cụ</dd>
           <dt><kbd>N</kbd></dt><dd>Nghe mẫu (Nghe – ghi)</dd>
+          <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Hạ / tăng nửa cung (Bài đọc nhạc)</dd>
+          <dt><kbd>0</kbd></dt><dd>Về giọng gốc (Bài đọc nhạc)</dd>
           <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Hoàn tác</dd>
           <dt><kbd>F</kbd></dt><dd>Trình chiếu</dd>
           <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Di chuyển giữa các ô</dd>
@@ -352,6 +354,16 @@
           <div class="seg" role="group" aria-label="Nội dung phát">
             <button data-mode="melody" aria-pressed="true" title="Phát cả cao độ và trường độ">Giai điệu</button>
             <button data-mode="rhythm" aria-pressed="false" title="Chỉ gõ trường độ, không có cao độ">Tiết tấu</button>
+          </div>
+          <span class="options-sep" aria-hidden="true"></span>
+          <div class="transpose-wrap" role="group" aria-label="Tùy chỉnh dịch giọng (Transpose)">
+            <span class="transpose-title" title="Dịch cao độ bài đọc nhạc (Transpose)">Dịch giọng:</span>
+            <div class="stepper" role="group" aria-label="Dịch giọng từng nửa cung">
+              <button class="step-btn" id="rTransDown" data-step="-1" aria-label="Giảm 1 nửa cung" title="Hạ 1 nửa cung (phím [ )"><svg class="ico" aria-hidden="true"><use href="#i-minus"/></svg></button>
+              <output id="rTransOut" for="rTrans" aria-live="polite"><b>0</b><small id="rTransKey">Gốc</small></output>
+              <button class="step-btn" id="rTransUp" data-step="1" aria-label="Tăng 1 nửa cung" title="Tăng 1 nửa cung (phím ] )"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button>
+            </div>
+            <button class="btn-reset-trans" id="rTransReset" title="Đặt lại về giọng gốc của bài (phím 0)" aria-label="Đặt lại về giọng gốc" hidden>Về gốc</button>
           </div>
           <div class="switches" role="group" aria-label="Tuỳ chọn khi phát">
             <button class="switch" role="switch" data-opt="countIn" aria-checked="true" title="Đếm 1 ô nhịp trước khi vào bài"><span class="switch-track" aria-hidden="true"></span>Đếm vào</button>
