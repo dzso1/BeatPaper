@@ -20,6 +20,7 @@
   --r-sm: 6px;
   --r-md: 10px;
   --r-lg: 16px;
+  --r-full: 9999px;
 
   --bg: #F3EFE5;
   --surface: #FFFDF8;
@@ -347,19 +348,75 @@ input[type="range"]:focus-visible { outline-offset: 4px; }
 .reading { min-width: 0; }
 .options { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-4); }
 .options-sep { width: 1px; height: 24px; background: var(--line-strong); margin: 0 var(--s-2); }
-.transpose-wrap { display: inline-flex; align-items: center; gap: var(--s-2); }
-.transpose-title { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); white-space: nowrap; }
-.transpose-wrap .stepper output { min-width: 58px; text-align: center; line-height: 1.15; }
-.transpose-wrap .stepper output b { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--ink); display: block; }
-.transpose-wrap .stepper output small { font-size: 11px; font-weight: 600; color: var(--accent-ink, var(--blue)); display: block; white-space: nowrap; }
-.btn-reset-trans {
-  height: 28px; padding: 0 10px; border-radius: var(--r-full);
-  background: var(--sunk); border: 1px solid var(--line-strong);
-  color: var(--ink-2); font-size: 12px; font-weight: 600; cursor: pointer;
-  transition: background var(--d-fast) var(--ease), color var(--d-fast) var(--ease), transform var(--d-fast) var(--ease);
+.transpose-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 2px 10px;
+  border-radius: var(--r-md);
+  background: var(--sunk);
 }
-.btn-reset-trans:hover { background: var(--hover); color: var(--ink); }
-.btn-reset-trans:active { transform: scale(.94); }
+.transpose-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.transpose-wrap .stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.transpose-wrap .stepper output {
+  min-width: 52px;
+  text-align: center;
+  line-height: 1.15;
+}
+.transpose-wrap .stepper output b {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: block;
+}
+.transpose-wrap .stepper output small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-ink, var(--blue));
+  display: block;
+  white-space: nowrap;
+}
+.btn-reset-trans {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background-color var(--d-fast) var(--ease), color var(--d-fast) var(--ease), transform var(--d-fast) var(--ease);
+}
+.btn-reset-trans:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.btn-reset-trans:active {
+  transform: scale(0.94);
+}
+.btn-reset-trans .ico {
+  width: 13px;
+  height: 13px;
+}
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px var(--s-4); padding-bottom: var(--s-4); margin-bottom: var(--s-5); border-bottom: 1px solid var(--line); font-size: var(--t-sm); color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
