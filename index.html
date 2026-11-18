@@ -314,11 +314,60 @@
       <div class="reading">
         <header class="page-head">
           <div>
-            <h1 id="rTitle"></h1>
+            <div class="rhead-title-wrap">
+              <h1 id="rTitle"></h1>
+              <button class="mode-badge" id="rModeBadge" title="Bấm để xem hướng dẫn phân biệt Trưởng và Thứ" aria-expanded="false" aria-controls="modeExplainer">
+                <span id="rModeBadgeIcon">☀️</span>
+                <span id="rModeText">Giọng Trưởng (Major)</span>
+                <span class="mode-badge-hint" aria-hidden="true">ℹ️ Phân biệt Trưởng – Thứ</span>
+              </button>
+            </div>
             <p class="page-sub" id="rMeta"></p>
           </div>
           <p class="status" id="rStatus"></p>
         </header>
+
+        <section class="mode-explainer" id="modeExplainer" role="region" aria-label="Hướng dẫn phân biệt Giọng Trưởng và Giọng Thứ" hidden>
+          <div class="mode-explainer-inner">
+            <div class="mode-explainer-head">
+              <h3><svg class="ico" aria-hidden="true"><use href="#i-note"/></svg> Phân biệt Giọng Trưởng (Major) và Giọng Thứ (Minor)</h3>
+              <button class="btn-close-explainer" id="closeModeExplainer" aria-label="Đóng bảng giải thích">&times;</button>
+            </div>
+            <div class="mode-cards">
+              <div class="mode-card mode-card--major" id="cardMajor">
+                <div class="mode-card-header">
+                  <span class="mode-card-icon" aria-hidden="true">☀️</span>
+                  <h4>Giọng Trưởng (Major)</h4>
+                  <span class="mode-card-pill">Tươi sáng · Hào hùng</span>
+                </div>
+                <p class="mode-desc">Màu sắc âm nhạc rạng rỡ, trong sáng, phấn khởi như ánh nắng ban ngày.</p>
+                <div class="mode-detail">
+                  <div><strong>Quãng 3 Trưởng:</strong> Rộng 2 cung (Đô &rarr; Mi)</div>
+                  <div><strong>Âm chủ kết bài:</strong> Thường kết thúc ở nốt Đô (C)</div>
+                </div>
+                <button class="btn-chord btn-chord--major" id="playMajorChord" title="Bấm để nghe thử hợp âm Đô trưởng (C - E - G)">
+                  <svg class="ico" aria-hidden="true"><use href="#i-sound"/></svg> Nghe hợp âm Trưởng (Đô - Mi - Son)
+                </button>
+              </div>
+              <div class="mode-card mode-card--minor" id="cardMinor">
+                <div class="mode-card-header">
+                  <span class="mode-card-icon" aria-hidden="true">🌙</span>
+                  <h4>Giọng Thứ (Minor)</h4>
+                  <span class="mode-card-pill">Trầm lắng · Sâu sắc</span>
+                </div>
+                <p class="mode-desc">Màu sắc âm nhạc êm dịu, man mác buồn, thiết tha như ánh trăng đêm.</p>
+                <div class="mode-detail">
+                  <div><strong>Quãng 3 Thứ:</strong> Hẹp 1.5 cung (La &rarr; Đô)</div>
+                  <div><strong>Âm chủ kết bài:</strong> Thường kết thúc ở nốt La (A)</div>
+                </div>
+                <button class="btn-chord btn-chord--minor" id="playMinorChord" title="Bấm để nghe thử hợp âm La thứ (A - C - E)">
+                  <svg class="ico" aria-hidden="true"><use href="#i-sound"/></svg> Nghe hợp âm Thứ (La - Đô - Mi)
+                </button>
+              </div>
+            </div>
+            <div class="mode-tip" id="modeCurrentTip"></div>
+          </div>
+        </section>
 
         <div class="dock">
           <button class="play" id="rPlayBtn">

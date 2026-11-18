@@ -2064,6 +2064,54 @@ function currentKeyText() {
   return `${info.name} (${k > 0 ? '+' + k : k})`;
 }
 
+function updateModeUI(r) {
+  if (!r) return;
+  const isMinor = r.key && r.key.includes('thứ');
+  const isPenta = r.key && r.key.includes('Ngũ cung');
+  const mode = isMinor ? 'minor' : isPenta ? 'penta' : 'major';
+  const k = rd.transpose || 0;
+  const keyInfo = currentKeyInfo();
+
+  const badge = $('rModeBadge');
+  const badgeIcon = $('rModeBadgeIcon');
+  const badgeText = $('rModeText');
+  const tip = $('modeCurrentTip');
+
+  if (badge) {
+    badge.classList.remove('mode-badge--major', 'mode-badge--minor', 'mode-badge--penta');
+    badge.classList.add(`mode-badge--${mode}`);
+    badge.setAttribute('title', isMinor ? 'Bài đọc ở giọng Thứ (bấm để xem hướng dẫn)' : isPenta ? 'Bài đọc ở thang Ngũ cung (bấm để xem hướng dẫn)' : 'Bài đọc ở giọng Trưởng (bấm để xem hướng dẫn)');
+  }
+  if (badgeIcon) {
+    badgeIcon.textContent = isMinor ? '🌙' : isPenta ? '🍃' : '☀️';
+  }
+  if (badgeText) {
+    badgeText.textContent = isMinor ? 'Giọng Thứ (Minor)' : isPenta ? 'Thang Ngũ Cung' : 'Giọng Trưởng (Major)';
+  }
+  $('cardMajor')?.classList.toggle('mode-card--active', mode === 'major');
+  $('cardMinor')?.classList.toggle('mode-card--active', mode === 'minor');
+
+  if (tip) {
+    const keyDisplay = k === 0 ? r.key : `${keyInfo.name} (${k > 0 ? '+' + k : k} nửa cung so với gốc ${r.key})`;
+    if (isMinor) {
+      tip.innerHTML = `💡 Bài này viết ở giọng <strong>${keyDisplay}</strong>. Quãng 3 từ âm chủ là <em>quãng 3 thứ</em> (1,5 cung), nốt kết thường là <strong>La (A)</strong>, âm hưởng trầm lắng, da diết.`;
+    } else if (isPenta) {
+      tip.innerHTML = `💡 Bài này viết ở giọng <strong>${keyDisplay}</strong> (thang 5 âm dân gian Tây Bắc), không có nốt Fa và Si, âm hưởng mộc mạc, tươi sáng, dân tộc.`;
+    } else {
+      tip.innerHTML = `💡 Bài này viết ở giọng <strong>${keyDisplay}</strong>. Quãng 3 từ âm chủ là <em>quãng 3 trưởng</em> (2 cung), nốt kết thường là <strong>Đô (C)</strong>, âm hưởng tươi sáng, rực rỡ, hào hùng.`;
+    }
+  }
+}
+
+function playChord(type) {
+  if (!ensureAudio()) return;
+  const t0 = ctx.currentTime + 0.02;
+  const notes = type === 'major' ? [60, 64, 67, 72] : [57, 60, 64, 69];
+  notes.forEach((m, idx) => {
+    tone(m, t0 + idx * 0.06, 1.8 - idx * 0.05, 0.35, fx);
+  });
+}
+
 function updateRMeta() {
   if (!rd.reading) return;
   const r = rd.reading;
@@ -2072,6 +2120,7 @@ function updateRMeta() {
   const lyricInfo = (rOpt.text === 'lyrics' && r.lyricsOrigin) ? r.lyricsOrigin : null;
   $('rMeta').innerHTML = [origin, lyricInfo, currentKeyText(), `Nhịp ${r.meter}`, r.remark].filter(Boolean).join(' · ') +
     ` · <a href="${bookPageUrl(book, r.page)}" target="_blank" rel="noopener" title="Mở đúng trang ${r.page} trong sách điện tử">SGK Âm nhạc ${r.grade}, tr. ${r.page} ↗</a>`;
+  updateModeUI(r);
 }
 
 function setRTranspose(v, rerender = true) {
@@ -2338,11 +2387,13 @@ function selectGrade(grade, no) {
   box.innerHTML = list.map((r) => {
     const dots = parseScore(r.notes).flatMap((b) => b.items).filter((i) => !i.rest).slice(0, 6)
       .map((i) => `<i style="background:var(--n-${i.letter})"></i>`).join('');
+    const mode = r.key.includes('thứ') ? 'minor' : r.key.includes('Ngũ cung') ? 'penta' : 'major';
+    const modeLabel = mode === 'major' ? 'Trưởng' : mode === 'minor' ? 'Thứ' : 'Ngũ cung';
     return `<li><button class="ritem" data-no="${r.no}">
-      <span class="no">Số ${r.no}</span>
+      <span class="no">Số ${r.no} <span class="scale-tag scale-tag--${mode}">${modeLabel}</span></span>
       <span class="dots" aria-hidden="true">${dots}</span>
       <span class="t">${r.name || topicName(r)}</span>
-      <span class="meta">Nhịp ${r.meter} · trang ${r.page}</span>
+      <span class="meta">Nhịp ${r.meter} · ${r.key} · trang ${r.page}</span>
     </button></li>`;
   }).join('');
   const pick = list.find((r) => r.no === no) || list[0];
@@ -2987,5 +3038,28 @@ try {
 $('rTransDown')?.addEventListener('click', () => setRTranspose((rd.transpose || 0) - 1));
 $('rTransUp')?.addEventListener('click', () => setRTranspose((rd.transpose || 0) + 1));
 $('rTransReset')?.addEventListener('click', () => setRTranspose(0));
+
+$('rModeBadge')?.addEventListener('click', () => {
+  const exp = $('modeExplainer');
+  if (!exp) return;
+  const willShow = exp.hidden;
+  exp.hidden = !willShow;
+  $('rModeBadge')?.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+});
+$('closeModeExplainer')?.addEventListener('click', () => {
+  const exp = $('modeExplainer');
+  if (exp) exp.hidden = true;
+  $('rModeBadge')?.setAttribute('aria-expanded', 'false');
+});
+$('playMajorChord')?.addEventListener('click', () => playChord('major'));
+$('playMinorChord')?.addEventListener('click', () => playChord('minor'));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('modeExplainer') && !$('modeExplainer').hidden) {
+    $('modeExplainer').hidden = true;
+    $('rModeBadge')?.setAttribute('aria-expanded', 'false');
+    $('rModeBadge')?.focus();
+  }
+});
 setupThumbs();
 route();
